@@ -1,4 +1,4 @@
-# Simple 3D Driving
+﻿# Simple 3D Driving
 
 A small driving sandbox in the browser. You drive a red car around a straight road with cones, trees and buildings.
 
@@ -30,7 +30,7 @@ Then open the printed URL (for example `http://localhost:8000`).
 | S / Down | Brake, then reverse |
 | A / Left, D / Right | Steer |
 | Space | Handbrake |
-| R | Reset car to start |
+| R | Reset car to its parking spot at the distributor |
 | Esc or Menu button | Open or close the vehicle menu (driving pauses while open) |
 
 ## Vehicles
@@ -49,7 +49,13 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/core/world.js` - shared world size, street layout, collision obstacles, random helpers
 - `src/core/primitives.js` - box and sphere mesh helpers
 - `src/vehicles/vehicle.js` - vehicle definitions and models (motorbikes, pickup, box car, container car)
+- `src/game/marker.js` - yellow arrow above the next mission target
+- `src/game/mission.js` - user types and their missions (visit 15 stores, then return to the distributor)
 - `src/world/environment.js` - ground, roads, sidewalks
-- `src/world/building.js` - parking lots and buildings
+- `src/world/building/town.js` - parking lot layout and placement
+- `src/world/building/models.js` - building and park models with category weights
+- `src/world/building/facade.js` - windows, doors, roof trim, and store signs
+- `src/world/building/park.js` - park contents (fountain and benches)
+- `src/world/building/distributor.js` - distributor lot: tower, warehouse, and vehicle parking spots
 - `src/world/tree.js` - six tree models and tree placement
 - `src/world/bush.js` - five bush decoration models and placement

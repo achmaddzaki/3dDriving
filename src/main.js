@@ -1,10 +1,12 @@
-import * as THREE from 'three';
+﻿import * as THREE from 'three';
 import { WORLD_LIMIT, ZONES, inRect, obstacles } from './core/world.js';
 import { buildEnvironment } from './world/environment.js';
-import { buildTown } from './world/building.js';
+import { buildTown } from './world/building/town.js';
 import { addTrees } from './world/tree.js';
 import { addBushes } from './world/bush.js';
-import { VEHICLES, buildVehicle, disposeObject } from './vehicles/vehicle.js';
+import { VEHICLES, buildVehicle } from './vehicles/vehicle.js';
+import { USER_TYPES } from './game/mission.js';
+import { createDirectionArrow, createMarker } from './game/marker.js';
 
 const keys = new Set();
 let menuOpen = false;
@@ -51,18 +53,52 @@ scene.add(sun, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
 
 // World: roads and sidewalks, then parking lots with buildings, then trees
 buildEnvironment(scene);
-const lots = buildTown(scene);
+const { lots, spots, stores, distributorLot } = buildTown(scene, VEHICLES.length);
 addTrees(scene, lots);
 addBushes(scene, lots);
 
-let vehicle = VEHICLES[0];
-let carMesh = buildVehicle(vehicle);
-scene.add(carMesh);
+// Every vehicle is parked at its own distributor spot. `active` is the one being driven.
+const RETURN_DELAY = 3; // seconds before a vehicle you stopped driving goes back to its spot
+const VEHICLE_ARROW_GAP = 1.5; // height of the direction arrow above the vehicle's top
 
+// Local footprint bounds of a model, measured before it is placed in the world
+function localExtent(mesh) {
+  const b = new THREE.Box3().setFromObject(mesh);
+  return { minX: b.min.x, maxX: b.max.x, minZ: b.min.z, maxZ: b.max.z, top: b.max.y };
+}
+
+// Puts a vehicle mesh at its current pose, with the front wheels straight
+function placeVehicle(entry) {
+  entry.mesh.position.set(entry.pose.x, 0, entry.pose.z);
+  entry.mesh.rotation.y = entry.pose.heading;
+  for (const { pivot } of entry.mesh.userData.wheels) {
+    if (pivot) pivot.rotation.y = 0;
+  }
+}
+
+const fleet = VEHICLES.map((def, i) => {
+  const mesh = buildVehicle(def);
+  const home = spots[i];
+  const entry = {
+    def,
+    mesh,
+    home,
+    pose: { ...home },
+    extent: localExtent(mesh),
+    returnTimer: null, // seconds left before a stopped vehicle returns home
+  };
+  scene.add(mesh);
+  placeVehicle(entry);
+  return entry;
+});
+
+let active = fleet[0];
+let vehicle = active.def;
 const car = { x: 0, z: 0, heading: 0, speed: 0, steer: 0, wheelAngle: 0 };
+Object.assign(car, active.pose);
 
 function resetCar() {
-  Object.assign(car, { x: 0, z: 0, heading: 0, speed: 0, steer: 0 });
+  Object.assign(car, { x: active.home.x, z: active.home.z, heading: active.home.heading, speed: 0, steer: 0 });
 }
 
 const GRASS_SPEED_FACTOR = 0.5;   // top speed multiplier on grass
@@ -118,9 +154,33 @@ function updateCar(dt) {
   car.z = Math.min(Math.max(car.z, -WORLD_LIMIT), WORLD_LIMIT);
 }
 
+// Axis-aligned box around a parked or stopped vehicle at its current pose
+function footprint(entry) {
+  const { x, z, heading } = entry.pose;
+  const s = Math.sin(heading);
+  const c = Math.cos(heading);
+  const { minX, maxX, minZ, maxZ } = entry.extent;
+  const corners = [[minX, minZ], [minX, maxZ], [maxX, minZ], [maxX, maxZ]].map(([lx, lz]) => ({
+    x: x + lx * c + lz * s,
+    z: z - lx * s + lz * c,
+  }));
+  return {
+    minX: Math.min(...corners.map((p) => p.x)),
+    maxX: Math.max(...corners.map((p) => p.x)),
+    minZ: Math.min(...corners.map((p) => p.z)),
+    maxZ: Math.max(...corners.map((p) => p.z)),
+  };
+}
+
+// Every vehicle that is not being driven blocks the car like a building
+function vehicleObstacles() {
+  return fleet.filter((e) => e !== active).map((e) => ({ box: footprint(e) }));
+}
+
 function resolveCollisions() {
+  const solids = [...obstacles, ...vehicleObstacles()];
   for (const c of vehicle.colliders) {
-    for (const o of obstacles) {
+    for (const o of solids) {
       const fx = Math.sin(car.heading);
       const fz = Math.cos(car.heading);
       const px = car.x + fx * c.z;
@@ -172,13 +232,25 @@ function boxPush(px, pz, r, b) {
 }
 
 function syncCarMesh(dt) {
-  carMesh.position.set(car.x, 0, car.z);
-  carMesh.rotation.y = car.heading;
+  active.mesh.position.set(car.x, 0, car.z);
+  active.mesh.rotation.y = car.heading;
 
   car.wheelAngle += (car.speed * dt) / vehicle.wheelRadius;
-  for (const { spin, pivot } of carMesh.userData.wheels) {
+  for (const { spin, pivot } of active.mesh.userData.wheels) {
     spin.rotation.x = car.wheelAngle;
     if (pivot) pivot.rotation.y = car.steer;
+  }
+}
+
+// Counts down the return timers and sends stopped vehicles back to their spots
+function updateReturns(dt) {
+  for (const entry of fleet) {
+    if (entry.returnTimer === null) continue;
+    entry.returnTimer -= dt;
+    if (entry.returnTimer > 0) continue;
+    entry.returnTimer = null;
+    entry.pose = { ...entry.home };
+    placeVehicle(entry);
   }
 }
 
@@ -203,14 +275,30 @@ const speedEl = document.getElementById('speed');
 const gearEl = document.getElementById('gear');
 const vehicleEl = document.getElementById('vehicle');
 
+const userTypeEl = document.getElementById('user-type');
+const missionEl = document.getElementById('mission');
+let shownMissionText = '';
+
 function updateHud() {
   speedEl.textContent = `${Math.round(Math.abs(car.speed) * 3.6)} km/h`;
   gearEl.textContent = car.speed < -0.1 ? 'Gear: R' : 'Gear: D';
+  const text = mission.status().join('\n');
+  if (text === shownMissionText) return;
+  shownMissionText = text;
+  missionEl.textContent = text;
 }
 
 // Menu
 const menuEl = document.getElementById('menu');
 const menuButtons = document.querySelectorAll('[data-vehicle]');
+const typeButtons = document.querySelectorAll('[data-type]');
+
+// Mission for the chosen user type, created over the current store and distributor lots
+const missionContext = { stores, distributorLot };
+let userType = USER_TYPES[0];
+let mission = userType.createMission(missionContext);
+const marker = createMarker(scene);
+const vehicleArrow = createDirectionArrow(scene);
 
 function setMenu(open) {
   menuOpen = open;
@@ -218,21 +306,34 @@ function setMenu(open) {
   if (open) keys.clear();
 }
 
+// Drives the picked vehicle from its current spot and starts the return timer for the previous one.
+// The camera eases over to the new vehicle through its follow lerp.
 function selectVehicle(id) {
-  const next = VEHICLES.find((v) => v.id === id);
-  if (!next || next === vehicle) return;
+  const next = fleet.find((e) => e.def.id === id);
+  if (!next || next === active) return;
 
-  vehicle = next;
-  scene.remove(carMesh);
-  disposeObject(carMesh);
-  carMesh = buildVehicle(vehicle);
-  scene.add(carMesh);
+  active.pose = { x: car.x, z: car.z, heading: car.heading };
+  active.returnTimer = RETURN_DELAY;
 
-  resetCar();
+  // A vehicle still on the road is picked up where it stopped and keeps its place
+  next.returnTimer = null;
+  active = next;
+  vehicle = next.def;
+  Object.assign(car, { x: next.pose.x, z: next.pose.z, heading: next.pose.heading, speed: 0, steer: 0 });
   syncCarMesh(0);
-  updateCamera(0, true);
+
   vehicleEl.textContent = `Vehicle: ${vehicle.name}`;
   menuButtons.forEach((b) => b.classList.toggle('active', b.dataset.vehicle === id));
+}
+
+// Switching to another user type starts that type's mission from the beginning
+function selectUserType(id) {
+  const next = USER_TYPES.find((t) => t.id === id);
+  if (!next || next === userType) return;
+  userType = next;
+  mission = userType.createMission(missionContext);
+  userTypeEl.textContent = `User: ${userType.name}`;
+  typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === id));
 }
 
 document.getElementById('menu-btn').addEventListener('click', () => setMenu(!menuOpen));
@@ -247,14 +348,37 @@ menuButtons.forEach((btn) => {
   });
 });
 
+typeButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    selectUserType(btn.dataset.type);
+    setMenu(false);
+  });
+});
+
 menuButtons.forEach((b) => b.classList.toggle('active', b.dataset.vehicle === vehicle.id));
 vehicleEl.textContent = `Vehicle: ${vehicle.name}`;
+typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === userType.id));
+userTypeEl.textContent = `User: ${userType.name}`;
 
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
+
+// Shows the lot marker on the target, and the arrow above the car turned toward it
+function updateTargetMarkers(target, time) {
+  if (!target) {
+    marker.hide();
+    vehicleArrow.hide();
+    return;
+  }
+  marker.show(target, time);
+  const tx = (target.minX + target.maxX) / 2;
+  const tz = (target.minZ + target.maxZ) / 2;
+  const yaw = Math.atan2(tx - car.x, tz - car.z);
+  vehicleArrow.show(car.x, active.extent.top + VEHICLE_ARROW_GAP, car.z, yaw, time);
+}
 
 let last = performance.now();
 function frame(now) {
@@ -264,7 +388,10 @@ function frame(now) {
   if (!menuOpen) {
     updateCar(dt);
     syncCarMesh(dt);
+    updateReturns(dt);
+    mission.update(car, dt);
   }
+  updateTargetMarkers(mission.target(car), now / 1000);
   updateCamera(dt);
   updateHud();
   renderer.render(scene, camera);

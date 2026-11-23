@@ -9,6 +9,16 @@ const COMMON = {
   turnRateScale: 0.6, // fraction of the bicycle-model turn rate
 };
 
+// Straight limb between two [x, y, z] points, drawn as a thin box
+function limb(g, mat, from, to, thickness) {
+  const a = new THREE.Vector3(...from);
+  const b = new THREE.Vector3(...to);
+  const dir = b.clone().sub(a);
+  const mesh = box(thickness, thickness, dir.length(), mat, (a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2);
+  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir.normalize());
+  g.add(mesh);
+}
+
 // Shared motorbike base. Each bike variant adds its own cargo.
 const BIKE_COLLIDERS = [{ z: 0.9, r: 0.5 }, { z: -0.9, r: 0.5 }];
 const BIKE = {
@@ -34,6 +44,13 @@ const BIKE = {
     g.add(box(0.1, 0.9, 0.1, m.metal, 0, 0.75, 0.9));
     g.add(box(0.45, 0.7, 0.3, m.paint, 0, 1.25, -0.25));
     g.add(sphere(0.2, m.helmet, 0, 1.75, -0.2));
+    for (const side of [-1, 1]) {
+      g.add(sphere(0.09, m.helmet, side * 0.35, 1.15, 0.85)); // hand on the grip
+      g.add(box(0.12, 0.1, 0.28, m.dark, side * 0.25, 0.4, 0.35)); // foot on the peg
+      limb(g, m.paint, [side * 0.25, 1.45, -0.2], [side * 0.35, 1.15, 0.85], 0.1); // arm
+      limb(g, m.dark, [side * 0.15, 0.9, -0.3], [side * 0.2, 0.75, 0.1], 0.14); // thigh
+      limb(g, m.dark, [side * 0.2, 0.75, 0.1], [side * 0.25, 0.42, 0.35], 0.12); // shin
+    }
   },
 };
 

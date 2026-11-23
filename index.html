@@ -25,6 +25,7 @@
     #hud { top: 12px; left: 12px; line-height: 1.5; }
     #speed { font-size: 28px; font-weight: 700; }
     #help { bottom: 12px; left: 12px; font-size: 13px; line-height: 1.6; }
+    #mission { white-space: pre; margin-top: 6px; font-size: 13px; line-height: 1.4; }
     kbd {
       background: rgba(255, 255, 255, 0.2);
       border-radius: 4px;
@@ -70,13 +71,14 @@
       font-size: 20px;
       cursor: pointer;
     }
-    .vehicle-grid {
+    .section-title { margin: 18px 0 0; font-size: 15px; color: #b0bac9; }
+    .option-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 12px;
-      margin-top: 16px;
+      margin-top: 10px;
     }
-    .vehicle-grid button {
+    .option-grid button {
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -90,9 +92,9 @@
       cursor: pointer;
       font: inherit;
     }
-    .vehicle-grid button span { font-size: 13px; color: #b0bac9; }
-    .vehicle-grid button:hover { background: #34405299; border-color: #4fc3f7; }
-    .vehicle-grid button.active { border-color: #ffb300; }
+    .option-grid button span { font-size: 13px; color: #b0bac9; }
+    .option-grid button:hover { background: #34405299; border-color: #4fc3f7; }
+    .option-grid button.active { border-color: #ffb300; }
     .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
   </style>
   <script type="importmap">
@@ -110,6 +112,8 @@
     <div id="speed">0 km/h</div>
     <div id="gear">Gear: D</div>
     <div id="vehicle">Vehicle</div>
+    <div id="user-type">User: Salesman</div>
+    <div id="mission">Mission</div>
   </div>
 
   <div id="help" class="panel">
@@ -121,16 +125,25 @@
   <div id="menu" class="hidden">
     <div class="menu-card">
       <div class="menu-header">
-        <h2>Choose vehicle</h2>
+        <h2>Menu</h2>
         <button id="menu-close" aria-label="Close menu">✕</button>
       </div>
-      <div class="vehicle-grid">
+      <h3 class="section-title">Vehicle</h3>
+      <div class="option-grid">
         <button data-vehicle="bike-small"><strong>Motorbike + Small Cargo</strong><span>Light bike with one small box behind</span></button>
         <button data-vehicle="bike-sides"><strong>Motorbike + Side Cargo</strong><span>Bike with a cargo box on the left and right</span></button>
         <button data-vehicle="bike-big"><strong>Motorbike + Big Cargo</strong><span>Bike with a large cargo box behind</span></button>
         <button data-vehicle="pickup"><strong>Pickup Car</strong><span>Balanced all-rounder with an open bed</span></button>
         <button data-vehicle="boxcar"><strong>Box Car</strong><span>Tall box truck, slow to speed up and turn</span></button>
         <button data-vehicle="container"><strong>Container Car</strong><span>Long truck pulling a big container</span></button>
+      </div>
+      <h3 class="section-title">User type</h3>
+      <div class="option-grid">
+        <button data-type="salesman"><strong>Salesman</strong><span>Visit 15 stores, then return to the distributor</span></button>
+        <button data-type="canvasser"><strong>Canvasser</strong><span>Visit 15 stores, then return to the distributor</span></button>
+        <button data-type="driver"><strong>Driver</strong><span>Visit 15 stores, then return to the distributor</span></button>
+        <button data-type="collector"><strong>Collector</strong><span>Visit 15 stores, then return to the distributor</span></button>
+        <button data-type="surveyor"><strong>Surveyor</strong><span>Visit 15 stores, then return to the distributor</span></button>
       </div>
       <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
     </div>
