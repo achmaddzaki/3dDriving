@@ -37,7 +37,7 @@ Then open the printed URL (for example `http://localhost:8000`).
 
 Pick one from the menu. Each has its own model, speed, acceleration, steering, and turning behavior:
 
-- **Motorbike**: fastest and most nimble
+- **Motorbike + Small Cargo**, **Motorbike + Side Cargo**, **Motorbike + Big Cargo**: fastest and most nimble, one cargo layout each
 - **Pickup Car**: balanced, the default-style car
 - **Box Car**: tall box truck, slow to accelerate and turn
 - **Container Car**: long truck with a container trailer, slowest to turn
@@ -45,4 +45,11 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 ## Files
 
 - `index.html` - page layout, HUD, import map for Three.js
-- `main.js` - scene, car model, driving physics, collisions, chase camera
+- `src/main.js` - renderer, car physics, collisions, chase camera, menu, game loop
+- `src/core/world.js` - shared world size, street layout, collision obstacles, random helpers
+- `src/core/primitives.js` - box and sphere mesh helpers
+- `src/vehicles/vehicle.js` - vehicle definitions and models (motorbikes, pickup, box car, container car)
+- `src/world/environment.js` - ground, roads, sidewalks
+- `src/world/building.js` - parking lots and buildings
+- `src/world/tree.js` - six tree models and tree placement
+- `src/world/bush.js` - five bush decoration models and placement
