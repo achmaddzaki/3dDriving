@@ -96,6 +96,89 @@
     .option-grid button:hover { background: #34405299; border-color: #4fc3f7; }
     .option-grid button.active { border-color: #ffb300; }
     .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
+    #mobile {
+      position: fixed;
+      top: 50%;
+      right: 0;
+      width: 260px;
+      height: 520px;
+      margin-top: -260px;
+      transform: translateX(90%) rotate(8deg);
+      transform-origin: right center;
+      transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      z-index: 5;
+    }
+    #mobile.open { transform: translateX(0) rotate(0deg); }
+    .phone {
+      position: absolute;
+      inset: 0;
+      background: #111;
+      border-radius: 28px;
+      padding: 34px 14px 20px 36px;
+      box-sizing: border-box;
+      box-shadow: -6px 10px 24px rgba(0, 0, 0, 0.5);
+      color: #fff;
+    }
+    .phone-screen {
+      height: 100%;
+      background: #f4f6fa;
+      color: #1d2430;
+      border-radius: 14px;
+      padding: 14px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+    }
+    .app-header { font-weight: 700; font-size: 15px; }
+    .app-store { font-size: 13px; color: #5b6676; }
+    .app-text { margin: 0; font-size: 14px; line-height: 1.4; }
+    .app-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+    .app-btn {
+      display: none;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      background: #dfe5ee;
+      color: #1d2430;
+      font: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .app-btn.primary { background: #1e88e5; color: #fff; }
+    .app-btn:hover { filter: brightness(0.95); }
+    #mobile[data-state="arrived"] [data-show~="arrived"],
+    #mobile[data-state="checkedIn"] [data-show~="checkedIn"] { display: block; }
+    #mobile-toast {
+      position: absolute;
+      left: 50%;
+      bottom: 90px;
+      transform: translate(-50%, 8px);
+      background: #2e7d32;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 16px;
+      font-size: 13px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    #mobile-toast.show { opacity: 1; transform: translate(-50%, 0); }
+    #mobile-handle {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 0 0 0 5px;
+      text-align: left;
+      font-size: 18px;
+    }
   </style>
   <script type="importmap">
     {
@@ -139,15 +222,33 @@
       </div>
       <h3 class="section-title">User type</h3>
       <div class="option-grid">
-        <button data-type="salesman"><strong>Salesman</strong><span>Visit 15 stores, then return to the distributor</span></button>
-        <button data-type="canvasser"><strong>Canvasser</strong><span>Visit 15 stores, then return to the distributor</span></button>
-        <button data-type="driver"><strong>Driver</strong><span>Visit 15 stores, then return to the distributor</span></button>
-        <button data-type="collector"><strong>Collector</strong><span>Visit 15 stores, then return to the distributor</span></button>
-        <button data-type="surveyor"><strong>Surveyor</strong><span>Visit 15 stores, then return to the distributor</span></button>
+        <button data-type="salesman"><strong>Salesman</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
+        <button data-type="canvasser"><strong>Canvasser</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
+        <button data-type="driver"><strong>Driver</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
+        <button data-type="collector"><strong>Collector</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
+        <button data-type="surveyor"><strong>Surveyor</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
       </div>
       <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
     </div>
   </div>
+
+  <aside id="mobile">
+    <button id="mobile-handle" aria-label="Show or hide the mobile app">📱</button>
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="app-header">Distributor App</div>
+        <div id="mobile-store" class="app-store"></div>
+        <p id="mobile-text" class="app-text"></p>
+        <div class="app-actions">
+          <button id="mobile-checkin" class="app-btn primary" data-show="arrived">Check in</button>
+          <button id="mobile-order" class="app-btn" data-show="checkedIn">Create order</button>
+          <button id="mobile-photo" class="app-btn" data-show="checkedIn">Take picture</button>
+          <button id="mobile-checkout" class="app-btn primary" data-show="checkedIn">Check out</button>
+        </div>
+      </div>
+      <div id="mobile-toast"></div>
+    </div>
+  </aside>
 
   <script type="module" src="src/main.js"></script>
 </body>

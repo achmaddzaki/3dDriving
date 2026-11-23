@@ -10,6 +10,7 @@ import { createDistanceCuller } from './core/distance-cull.js';
 import { VEHICLES, buildVehicle } from './vehicles/vehicle.js';
 import { USER_TYPES } from './game/mission.js';
 import { createDirectionArrow, createMarker } from './game/marker.js';
+import { createMobileApp } from './game/mobile-app.js';
 
 const keys = new Set();
 let menuOpen = false;
@@ -309,6 +310,10 @@ let userType = USER_TYPES[0];
 let mission = userType.createMission(missionContext);
 const marker = createMarker(scene);
 const vehicleArrow = createDirectionArrow(scene);
+const mobileApp = createMobileApp({
+  onCheckIn: () => mission.checkIn(),
+  onCheckOut: () => mission.checkOut(),
+});
 
 function setMenu(open) {
   menuOpen = open;
@@ -342,6 +347,8 @@ function selectUserType(id) {
   if (!next || next === userType) return;
   userType = next;
   mission = userType.createMission(missionContext);
+  resetCar();
+  syncCarMesh(0);
   userTypeEl.textContent = `User: ${userType.name}`;
   typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === id));
 }
@@ -404,6 +411,7 @@ function frame(now) {
   updateTargetMarkers(mission.target(car), now / 1000);
   updateCamera(dt);
   updateHud();
+  mobileApp.update(mission.visitState());
   distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

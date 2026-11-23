@@ -51,7 +51,8 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/core/distance-cull.js` - hides static world objects beyond `RENDER_DISTANCE` (set in `main.js`) from the camera
 - `src/vehicles/vehicle.js` - vehicle definitions and models (motorbikes, pickup, box car, container car)
 - `src/game/marker.js` - yellow arrow above the next mission target
-- `src/game/mission.js` - user types and their missions (visit 15 stores, then return to the distributor)
+- `src/game/mission.js` - user types and their missions (check in and check out at 15 stores, then return to the distributor)
+- `src/game/mobile-app.js` - mobile app preview on the right edge: slides out in a store lot, hides again when the car leaves
 - `src/world/environment.js` - ground, roads, sidewalks with raised curbs, crossings, lane and parking markings, arrows, manhole covers, storm drains, street name signs, and roadside barriers
 - `src/world/building/town.js` - parking lot layout and placement
 - `src/world/building/models.js` - building and park models with category weights

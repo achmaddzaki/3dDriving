@@ -1,7 +1,6 @@
 ﻿import { inRect } from '../core/world.js';
 
 const VISIT_COUNT = 15;
-const STAY_SECONDS = 3;
 
 // Fisher-Yates shuffle of a copy of the list
 function shuffled(list) {
@@ -13,30 +12,40 @@ function shuffled(list) {
   return out;
 }
 
-// Visit mission: stay 3 seconds in each of 15 random stores, then stay 3 seconds in the distributor lot.
+// Visit mission: check in and check out at 15 random stores, then drive into the distributor lot to finish.
 // `ctx.stores` is a list of { name, rect }. `ctx.distributorLot` is a rect.
 function createVisitMission({ stores, distributorLot }) {
   const targets = shuffled(stores).slice(0, VISIT_COUNT);
   const visited = new Set();
   let phase = 'visit';
-  let stay = 0;
+  let atStore = null;    // target store the car is inside, visited or not
+  let checkedIn = null;  // store the player checked in at, cleared when the car leaves it
 
-  function updateVisit(car, dt) {
-    const here = targets.find((s) => !visited.has(s) && inRect(car.x, car.z, s.rect));
-    if (!here) {
-      stay = 0;
-      return;
-    }
-    stay += dt;
-    if (stay < STAY_SECONDS) return;
-    visited.add(here);
-    stay = 0;
+  // Entering the distributor lot completes the mission at once
+  function updateReturn(car) {
+    if (inRect(car.x, car.z, distributorLot)) phase = 'done';
+  }
+
+  // Check-in only works at an unvisited store the car is inside
+  function checkIn() {
+    if (phase !== 'visit' || !atStore || visited.has(atStore)) return;
+    checkedIn = atStore;
+  }
+
+  // Check-out completes the visit and moves the mission on
+  function checkOut() {
+    if (!checkedIn) return;
+    visited.add(checkedIn);
+    checkedIn = null;
     if (visited.size === targets.length) phase = 'return';
   }
 
-  function updateReturn(car, dt) {
-    stay = inRect(car.x, car.z, distributorLot) ? stay + dt : 0;
-    if (stay >= STAY_SECONDS) phase = 'done';
+  // Phone state for the store the car is in: 'arrived', 'checkedIn' or 'done'. Null outside target stores.
+  function visitState() {
+    if (!atStore) return null;
+    const { name } = atStore;
+    if (visited.has(atStore)) return { name, state: 'done' };
+    return { name, state: checkedIn === atStore ? 'checkedIn' : 'arrived' };
   }
 
   // Rect the car should head to next: the closest unvisited store, or the distributor lot on the return
@@ -60,10 +69,14 @@ function createVisitMission({ stores, distributorLot }) {
 
   return {
     update(car, dt) {
-      if (phase === 'visit') updateVisit(car, dt);
-      else if (phase === 'return') updateReturn(car, dt);
+      atStore = targets.find((s) => inRect(car.x, car.z, s.rect)) || null;
+      if (checkedIn && checkedIn !== atStore) checkedIn = null;
+      if (phase === 'return') updateReturn(car);
     },
     target: nextRect,
+    checkIn,
+    checkOut,
+    visitState,
     // Lines for the HUD. Visited stores get a check mark.
     status() {
       if (phase === 'return') return ['Return to the distributor lot'];
@@ -76,9 +89,9 @@ function createVisitMission({ stores, distributorLot }) {
 
 // Each user type has its own mission. All types use the visit mission for now.
 export const USER_TYPES = [
-  { id: 'salesman', name: 'Salesman', description: 'Visit 15 stores, then return to the distributor', createMission: createVisitMission },
-  { id: 'canvasser', name: 'Canvasser', description: 'Visit 15 stores, then return to the distributor', createMission: createVisitMission },
-  { id: 'driver', name: 'Driver', description: 'Visit 15 stores, then return to the distributor', createMission: createVisitMission },
-  { id: 'collector', name: 'Collector', description: 'Visit 15 stores, then return to the distributor', createMission: createVisitMission },
-  { id: 'surveyor', name: 'Surveyor', description: 'Visit 15 stores, then return to the distributor', createMission: createVisitMission },
+  { id: 'salesman', name: 'Salesman', description: 'Check in and out at 15 stores, then return to the distributor', createMission: createVisitMission },
+  { id: 'canvasser', name: 'Canvasser', description: 'Check in and out at 15 stores, then return to the distributor', createMission: createVisitMission },
+  { id: 'driver', name: 'Driver', description: 'Check in and out at 15 stores, then return to the distributor', createMission: createVisitMission },
+  { id: 'collector', name: 'Collector', description: 'Check in and out at 15 stores, then return to the distributor', createMission: createVisitMission },
+  { id: 'surveyor', name: 'Surveyor', description: 'Check in and out at 15 stores, then return to the distributor', createMission: createVisitMission },
 ];
