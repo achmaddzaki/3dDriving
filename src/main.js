@@ -1,10 +1,12 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { WORLD_LIMIT, ZONES, inRect, obstacles, sidewalkFixtures } from './core/world.js';
 import { buildEnvironment, addRoadEdges } from './world/environment.js';
 import { addStreetFurniture } from './world/street-furniture.js';
 import { buildTown } from './world/building/town.js';
 import { addTrees } from './world/tree.js';
 import { addBushes } from './world/bush.js';
+import { addLandscaping } from './world/landscaping.js';
+import { createDistanceCuller } from './core/distance-cull.js';
 import { VEHICLES, buildVehicle } from './vehicles/vehicle.js';
 import { USER_TYPES } from './game/mission.js';
 import { createDirectionArrow, createMarker } from './game/marker.js';
@@ -52,13 +54,18 @@ Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, f
 sun.shadow.camera.updateProjectionMatrix();
 scene.add(sun, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
 
-// World: roads and sidewalks, then parking lots with buildings, then trees
+// World: roads and sidewalks, then parking lots with buildings, then gardens, then trees
 buildEnvironment(scene);
 const { lots, spots, stores, distributorLot } = buildTown(scene, VEHICLES.length);
 addRoadEdges(scene, lots);
 addStreetFurniture(scene, lots, sidewalkFixtures);
-addTrees(scene, lots);
-addBushes(scene, lots);
+const gardens = addLandscaping(scene, lots);
+addTrees(scene, [...lots, ...gardens]);
+addBushes(scene, [...lots, ...gardens]);
+
+// Static world objects beyond RENDER_DISTANCE are hidden, so the GPU only draws what is nearby
+const RENDER_DISTANCE = 200; // meters from the camera; raise for a longer view, lower for speed
+const distanceCuller = createDistanceCuller(scene, RENDER_DISTANCE);
 
 // Every vehicle is parked at its own distributor spot. `active` is the one being driven.
 const RETURN_DELAY = 3; // seconds before a vehicle you stopped driving goes back to its spot
@@ -397,6 +404,7 @@ function frame(now) {
   updateTargetMarkers(mission.target(car), now / 1000);
   updateCamera(dt);
   updateHud();
+  distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }

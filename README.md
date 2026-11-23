@@ -1,4 +1,4 @@
-﻿# Simple 3D Driving
+# Simple 3D Driving
 
 A small driving sandbox in the browser. You drive a red car around a straight road with cones, trees and buildings.
 
@@ -48,6 +48,7 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/main.js` - renderer, car physics, collisions, chase camera, menu, game loop
 - `src/core/world.js` - shared world size, street layout, collision obstacles, random helpers, and the `ROAD_EDGE_COLLISION` switch for curb and barrier collisions (default off) and the `STREET_FURNITURE_COLLISION` switch for furniture collisions (default off)
 - `src/core/primitives.js` - box and sphere mesh helpers
+- `src/core/distance-cull.js` - hides static world objects beyond `RENDER_DISTANCE` (set in `main.js`) from the camera
 - `src/vehicles/vehicle.js` - vehicle definitions and models (motorbikes, pickup, box car, container car)
 - `src/game/marker.js` - yellow arrow above the next mission target
 - `src/game/mission.js` - user types and their missions (visit 15 stores, then return to the distributor)
@@ -55,9 +56,11 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/world/building/town.js` - parking lot layout and placement
 - `src/world/building/models.js` - building and park models with category weights
 - `src/world/building/facade.js` - windows, doors, roof trim, and store signs
-- `src/world/building/park.js` - park contents (fountain and benches)
+- `src/world/building/park.js` - park contents (fountain, benches, corner flower beds, planters)
 - `src/world/building/distributor.js` - distributor lot: tower, warehouse, and vehicle parking spots
 - `src/world/furniture-layout.js` - placement rules for street furniture (seeded, no `rand()`)
 - `src/world/street-furniture.js` - street furniture meshes: lamps, benches, trash bins, bus shelters, mailboxes, newspaper stands, vending machines, electrical boxes, fire hydrants, and advertising boards
-- `src/world/tree.js` - six tree models and tree placement
+- `src/world/tree.js` - ten tree models (adds Cherry Blossom, Cypress, Willow, Topiary) and tree placement
+- `src/world/landscaping.js` - 16 fenced or hedged neighborhood parks plus roadside seating areas, garden plots, flower beds, hedges, grass patches, and planter rows (own seeded generator)
+- `src/world/landscape-parts.js` - builders for flower beds, hedges, fences, planters, grass patches, and seating areas
 - `src/world/bush.js` - five bush decoration models and placement

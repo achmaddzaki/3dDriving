@@ -35,7 +35,7 @@ function cone(r, h, color, y) {
 }
 
 // Each model: `crown` is the clearance kept from roads and lots, `trunkRadius` is the collision circle.
-const TREE_MODELS = [
+export const TREE_MODELS = [
   {
     name: 'Fir',
     crown: 2.2,
@@ -93,6 +93,47 @@ const TREE_MODELS = [
       g.add(blob(2.3, 0xd84315, 0, 4.2, 0));
     },
   },
+  {
+    name: 'Cherry Blossom',
+    crown: 2.2,
+    trunkRadius: 0.6,
+    build(g) {
+      g.add(trunk(2.4, 0.3, 0x5d4037));
+      g.add(blob(1.8, 0xf8bbd0, 0, 4.0, 0));
+      g.add(blob(1.2, 0xf48fb1, 1.1, 3.6, 0.4));
+      g.add(blob(1.1, 0xf8bbd0, -1.0, 3.7, -0.4));
+    },
+  },
+  {
+    name: 'Cypress',
+    crown: 1.2,
+    trunkRadius: 0.5,
+    build(g) {
+      g.add(trunk(1.2, 0.25));
+      g.add(cone(1.1, 6.5, 0x1b5e20, 4.2));
+    },
+  },
+  {
+    name: 'Willow',
+    crown: 2.8,
+    trunkRadius: 0.8,
+    build(g) {
+      g.add(trunk(3, 0.4, 0x6d4c41));
+      const top = blob(2.6, 0xaed581, 0, 4.4, 0);
+      top.scale.y = 0.6;
+      g.add(top);
+      for (const [x, z] of [[1.8, 0], [-1.8, 0], [0, 1.8], [0, -1.8]]) g.add(blob(0.9, 0x9ccc65, x, 2.8, z));
+    },
+  },
+  {
+    name: 'Topiary',
+    crown: 1.2,
+    trunkRadius: 0.4,
+    build(g) {
+      g.add(trunk(1.6, 0.15, 0x795548));
+      g.add(blob(1.0, 0x66bb6a, 0, 2.3, 0));
+    },
+  },
 ];
 
 // Trees only on grass, with the crown kept clear of roads, sidewalks, parking, and buildings
@@ -107,7 +148,8 @@ export function addTrees(scene, lots) {
   }
 }
 
-function addTree(scene, model, x, z) {
+/// <summary>Places a <paramref name="model"/> tree at (<paramref name="x"/>, <paramref name="z"/>) with its trunk collision.</summary>
+export function addTree(scene, model, x, z) {
   const g = new THREE.Group();
   model.build(g);
   g.position.set(x, 0, z);
