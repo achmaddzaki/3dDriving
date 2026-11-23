@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple 3D Driving</title>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #87ceeb;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+    canvas { display: block; }
+    .panel {
+      position: fixed;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.45);
+      padding: 10px 14px;
+      border-radius: 8px;
+      text-shadow: 0 1px 2px #000;
+      user-select: none;
+    }
+    #hud { top: 12px; left: 12px; line-height: 1.5; }
+    #speed { font-size: 28px; font-weight: 700; }
+    #help { bottom: 12px; left: 12px; font-size: 13px; line-height: 1.6; }
+    kbd {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 1px 5px;
+    }
+    #menu-btn {
+      top: 12px;
+      right: 12px;
+      border: none;
+      font: inherit;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    #menu-btn:hover { background: rgba(0, 0, 0, 0.65); }
+    .hidden { display: none !important; }
+    #menu {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+    .menu-card {
+      background: #1d2430;
+      color: #fff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      width: min(520px, 92vw);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+    .menu-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .menu-header h2 { margin: 0; font-size: 22px; }
+    #menu-close {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+    }
+    .vehicle-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .vehicle-grid button {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      text-align: left;
+      padding: 14px;
+      background: #2a3443;
+      color: #fff;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .vehicle-grid button span { font-size: 13px; color: #b0bac9; }
+    .vehicle-grid button:hover { background: #34405299; border-color: #4fc3f7; }
+    .vehicle-grid button.active { border-color: #ffb300; }
+    .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
+  </style>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+      }
+    }
+  </script>
+</head>
+<body>
+  <button id="menu-btn" class="panel">☰ Menu</button>
+
+  <div id="hud" class="panel">
+    <div id="speed">0 km/h</div>
+    <div id="gear">Gear: D</div>
+    <div id="vehicle">Vehicle</div>
+  </div>
+
+  <div id="help" class="panel">
+    <kbd>W</kbd>/<kbd>↑</kbd> accelerate &nbsp; <kbd>S</kbd>/<kbd>↓</kbd> brake / reverse<br />
+    <kbd>A</kbd>/<kbd>←</kbd> and <kbd>D</kbd>/<kbd>→</kbd> steer &nbsp; <kbd>Space</kbd> handbrake<br />
+    <kbd>R</kbd> reset &nbsp; <kbd>Esc</kbd> menu
+  </div>
+
+  <div id="menu" class="hidden">
+    <div class="menu-card">
+      <div class="menu-header">
+        <h2>Choose vehicle</h2>
+        <button id="menu-close" aria-label="Close menu">✕</button>
+      </div>
+      <div class="vehicle-grid">
+        <button data-vehicle="motorbike"><strong>Motorbike</strong><span>Fast and nimble, very tight turns</span></button>
+        <button data-vehicle="pickup"><strong>Pickup Car</strong><span>Balanced all-rounder with an open bed</span></button>
+        <button data-vehicle="boxcar"><strong>Box Car</strong><span>Tall box truck, slow to speed up and turn</span></button>
+        <button data-vehicle="container"><strong>Container Car</strong><span>Long truck pulling a big container</span></button>
+      </div>
+      <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
+    </div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
