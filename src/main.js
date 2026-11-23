@@ -1,6 +1,7 @@
 ﻿import * as THREE from 'three';
-import { WORLD_LIMIT, ZONES, inRect, obstacles } from './core/world.js';
-import { buildEnvironment } from './world/environment.js';
+import { WORLD_LIMIT, ZONES, inRect, obstacles, sidewalkFixtures } from './core/world.js';
+import { buildEnvironment, addRoadEdges } from './world/environment.js';
+import { addStreetFurniture } from './world/street-furniture.js';
 import { buildTown } from './world/building/town.js';
 import { addTrees } from './world/tree.js';
 import { addBushes } from './world/bush.js';
@@ -54,6 +55,8 @@ scene.add(sun, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
 // World: roads and sidewalks, then parking lots with buildings, then trees
 buildEnvironment(scene);
 const { lots, spots, stores, distributorLot } = buildTown(scene, VEHICLES.length);
+addRoadEdges(scene, lots);
+addStreetFurniture(scene, lots, sidewalkFixtures);
 addTrees(scene, lots);
 addBushes(scene, lots);
 

@@ -6,6 +6,15 @@ export const WORLD_LIMIT = HALF_WORLD - 10;
 export const ROAD_HALF_WIDTH = 6;
 export const SIDE_ROAD_WIDTH = 8;
 export const SIDEWALK_WIDTH = 2.5;
+export const SIDEWALK_HEIGHT = 0.15;
+// true makes sidewalk curbs solid for driving, except in front of parking lots
+export const ROAD_EDGE_COLLISION = false;
+// true makes roadside barriers solid for driving, except in front of parking lots
+export const ROADSIDE_BARRIER_COLLISION = true;
+// true makes street furniture solid for driving
+export const STREET_FURNITURE_COLLISION = false;
+// Street lamp and traffic light pole positions { x, z }, which street furniture keeps clear of
+export const sidewalkFixtures = [];
 
 const TOWN_OFFSETS = [-160, -80, 80, 160];
 

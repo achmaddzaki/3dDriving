@@ -1,0 +1,27 @@
+{
+  "project_type": "Static Three.js 3D driving sandbox. Vanilla ES modules, no build step, no package.json. index.html loads Three.js v0.160.0 from a CDN through an import map. Serve the folder over HTTP to run it.",
+  "language": "JavaScript (ES modules)",
+  "build_system": "None. Open via a static server (npx serve . or python -m http.server). Node v20.18.0 is available for syntax checks only.",
+  "test_framework": "None in the repo. Verification uses a Node harness in $env:TEMP\\furn-check\\ (created by FEAT-001). It copies src, stubs the 'three' package with a Proxy module, runs buildEnvironment, buildTown, addRoadEdges and the furniture layout on the real town, and checks the placement rules.",
+  "build_command": "none",
+  "test_command": "node $env:TEMP\\furn-check\\check.mjs   (creates and refreshes the copy of src first; then node --check each changed .js inside the copy)",
+  "verification_instructions": "1) Run check.mjs; it must exit 0 and report zero violations. 2) It compares lot JSON and obstacle count with baseline.json captured before any edit; these must match unless a feature says otherwise. 3) Parse check: node --check on each changed .js file in the harness copy. 4) Visual checks by a person in the browser: traffic light heads face down, furniture sits on sidewalks, no furniture on the road or in parking bays.",
+  "snapshot_or_generated_files": null,
+  "environment_constraints": "Windows, PowerShell. Node v20.18.0. Do not run git commit or git push. Do not switch or create branches. No worktree. Do not read third-party library source (Three.js internals). Git index already holds staged changes from other tasks (src/world/building/facade.js, src/world/building/town.js, .agents/tasks/facade-details/, .agents/tasks/road-sidewalk-improvements/); do not stage, unstage or edit them.",
+  "contribution_requirements": "Personal steering: short doc comments with <summary> and <paramref> where parameters are named; one-line inline comments at most; early returns over deep nesting; no migration files; do not commit or push; use English; only run tests for major updates (this task is major, so the harness runs). The repo steering file .kiro/steering/backend-code-review.md does not exist.",
+  "key_patterns": "Instanced rendering: addInstanced(scene, geometry, mat, matrices) and matrixAt(x, y, z, sx, sy, sz, rotY) in src/core/primitives.js. Materials cached by color in tree.js and bush.js. Street geometry: STREETS entries {alongX, offset, halfWidth} in src/core/world.js; for alongX true the street runs along X at z = offset. Road plus sidewalk rectangles are ZONES. Parking lots (lots array from buildTown) start at halfWidth + SIDEWALK_WIDTH and extend away from the street. Collision obstacles are pushed to the obstacles array as {box:{minX,maxX,minZ,maxZ}} or {x,z,r}. Placement and clearance tests use rectsOverlap, inRect and grow from src/core/world.js. Random: rand() in world.js is one shared seeded generator; new placement code must use its own generator so the town, trees and bushes keep their layout. Sidewalk lamp, manhole and traffic light placement is in src/world/environment.js (addStreetLamps, addManholes, addTrafficLights, junctionLights).",
+  "relevant_files": [
+    "src/world/environment.js",
+    "src/core/primitives.js",
+    "src/core/world.js",
+    "src/main.js",
+    "src/world/building/town.js",
+    "src/world/building/facade.js",
+    "src/world/tree.js",
+    "src/world/bush.js",
+    "README.md",
+    "src/world/furniture-layout.js",
+    "src/world/street-furniture.js"
+  ],
+  "directory_structure": "src/core: shared constants, primitives, random and obstacles (world.js, primitives.js). src/world: environment.js (ground, roads, sidewalks, markings, lamps, traffic lights, barriers), tree.js, bush.js, and building/ (town.js lot layout, facade.js doors and signs, models.js, park.js, distributor.js). src/vehicles: vehicle models. src/game: missions and markers. src/main.js: renderer, physics, and world build order. .agents/tasks: plans and reviews for each task."
+}

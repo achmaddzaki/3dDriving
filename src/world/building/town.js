@@ -128,7 +128,7 @@ function addBuildingInLot(scene, s, side, t, spec, name) {
 
   // Direction from the building toward the street
   const road = s.alongX ? { nx: 0, nz: -side } : { nx: -side, nz: 0 };
-  addRoofTrim(scene, x, z, w, spec.height, d);
+  addRoofTrim(scene, x, z, w, spec.height, d, spec.model.roof);
   if (spec.model.roof === 'gable') addGableRoof(scene, x, z, w, spec.height, d);
   addFacades(scene, x, z, w, spec.height, d, road);
   if (spec.model.sign) {

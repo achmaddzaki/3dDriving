@@ -1,0 +1,28 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Create the verification harness, record the baseline, and turn the traffic light signal heads to face down toward the road. Positions of the poles, arms, junction centers, lens count (3 per light) and lens colors do not change. Each head box is turned so its front faces down: the head center stays at the same height, the head's long axis lies horizontal along the approach, and the lenses sit on the underside. One hanger per light joins the head top to the arm, because the turned head is 0.3 m tall. Independent of FEAT-002 except that FEAT-002 edits environment.js too, so this runs first.",
+  "status": "completed",
+  "steps": [
+    "Create $env:TEMP\\furn-check\\ with package.json {\"type\":\"module\"}, node_modules\\three\\index.js (a Proxy-based stub exporting every THREE.<Name> used under src, found by scanning src for THREE\\.(\\w+)), and check.mjs. check.mjs copies the repo src folder into the harness, imports buildEnvironment and addRoadEdges from world/environment.js, buildTown from world/building/town.js, runs them with a stub scene {add(){}}, and writes baseline.json with JSON.stringify(lots) and obstacles.length. It must skip furniture checks while src/world/furniture-layout.js is absent.",
+    "Run check.mjs before any edit and keep baseline.json.",
+    "In src/world/environment.js, replace the LENS_FRONT constant (line 41) with LIGHT_HEAD_T = 0.3 and LENS_T = 0.04 (each with a one-line comment).",
+    "Add a headMatrix(x, y, z, rotY) helper: compose position, quaternion from new THREE.Euler(Math.PI / 2, rotY, 0, 'YXZ'), scale (0.4, LIGHT_HEAD_H, LIGHT_HEAD_T). Replace the head matrixAt call in addTrafficLights (line 418) with headMatrix(l.headX, headY, l.headZ, l.rotY). Keep headY unchanged.",
+    "Replace the lens loop and its fx/fz lines in addTrafficLights with: for [color, d] of [['red', -0.3], ['yellow', 0], ['green', 0.3]], push matrixAt(l.headX + Math.sin(l.rotY) * d, headY - LIGHT_HEAD_T / 2 - LENS_T / 2, l.headZ + Math.cos(l.rotY) * d, 0.26, LENS_T, 0.26, l.rotY) into lenses[color].",
+    "Add a hangers array: per light, matrixAt(l.headX, (top + bottom) / 2, l.headZ, 0.08, top - bottom, 0.08) with top = armY - LIGHT_ARM_T / 2 and bottom = headY + LIGHT_HEAD_T / 2. Add hangers to the existing lightPoleMat addInstanced call that already holds poles and arms.",
+    "Do not change junctionLights, the poles, the arms, or any lens colors."
+  ],
+  "acceptance_criteria": [
+    "node --check passes on the changed environment.js in the harness copy.",
+    "check.mjs exits 0 and its lot JSON and obstacle count match baseline.json.",
+    "Each traffic light head is built with the flat orientation (front face pointing down), and lenses sit on its underside (checked in the browser by a person).",
+    "Four lights, 12 lenses, and 4 hangers are created; pole, arm, and head centers are unchanged."
+  ],
+  "verification": [
+    "node --check $env:TEMP\\furn-check\\src\\world\\environment.js",
+    "node $env:TEMP\\furn-check\\check.mjs (exit 0, same lot count and obstacle count as baseline.json)",
+    "Browser check by a person: open the page, drive to the junction at z = 80, and confirm the heads face down toward the road."
+  ],
+  "blocked_reason": null,
+  "findings": "Harness path: $env:TEMP\\furn-check (C:\\Users\\Zack\\AppData\\Local\\Temp\\furn-check). Baseline from baseline.json, captured before any repo edit: lot count 125, obstacle count 341. Commands run: (1) node $env:TEMP\\furn-check\\check.mjs before edits: exit 0, wrote baseline.json (lots: 125, obstacles: 341, furniture checks skipped because furniture-layout.js is absent). (2) node $env:TEMP\\furn-check\\check.mjs after edits: exit 0, lots: 125, obstacles: 341, violations: 0. (3) node --check $env:TEMP\\furn-check\\src\\world\\environment.js after edits: exit 0. Pending browser check by a person: open the page, drive to the junction at z = 80, and confirm the traffic light heads face down toward the road with lenses on their underside. The harness stubs three.js, so it confirms the build and counts only, not head orientation. Integration check (iteration 1): environment.js imports from core/world.js resolve, and the traffic light code is in place for FEAT-002's sidewalkFixtures pushes. No code change needed."
+}

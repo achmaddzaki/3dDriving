@@ -1,0 +1,12 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    "Gable roof clipping: rooftop AC units and tank are placed at flat-roof height, so on Residence D and E the AC units sit inside the gable roof. DECISION NEEDED: pass the roof type from town.js into addRoofTrim, or skip rooftop equipment on gable buildings.",
+    "Stair lands on a blank wall: the landing at 3.5 m has no door, and the first-floor windows start at 4.35 m. Add a back-wall door at the landing, or accept the stair as decorative.",
+    "Stair collision footprint: the stair blocks cars, which changes driving. DECISION NEEDED: keep the obstacles.push in addExteriorStair, or make the stair visual only.",
+    "Stair proportions: six steps over 3.5 m give 0.58 m risers with 0.3 m treads, so the stair reads as a steep block. Accept it as stylized, or revisit the proportions.",
+    "Stair naming mismatch: the addFacades comment says \"fire stair\" while the stair function describes a stepped concrete stair. Use one term.",
+    "Frame contrast: off-white frames on the cream Residence A walls (0xf5e6c8) may have low contrast (possible)."
+  ],
+  "reviewDoc": "d:\\Sharing Session\\Challange\\Driving\\.agents\\tasks\\facade-details\\review.md"
+}

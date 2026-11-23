@@ -1,0 +1,7 @@
+{
+  "task_id": "task-urban-street-furniture",
+  "task_description": "Populate the city sidewalks with ten kinds of static street furniture (street lamps, benches, trash bins, bus shelters, mailboxes, newspaper stands, vending machines, electrical boxes, fire hydrants, advertising boards), non-blocking by default with the switch STREET_FURNITURE_COLLISION in src/core/world.js. Also turn the existing traffic light signal heads to face down toward the road, changing nothing else about the lights.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}
