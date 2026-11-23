@@ -4,15 +4,28 @@ const MARKER_HEIGHT = 12;
 const BOB_HEIGHT = 0.6;
 const BOB_SPEED = 3; // radians per second
 
-// Cyan arrow above the driven vehicle, turned to point horizontally at the target
+// Flat "↑" arrow lying on the XZ plane, with its tip toward local +Z
+function flatArrowGeometry() {
+  const shape = new THREE.Shape();
+  shape.moveTo(0, 1.3);
+  shape.lineTo(0.8, 0.2);
+  shape.lineTo(0.3, 0.2);
+  shape.lineTo(0.3, -1.3);
+  shape.lineTo(-0.3, -1.3);
+  shape.lineTo(-0.3, 0.2);
+  shape.lineTo(-0.8, 0.2);
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.2, bevelEnabled: false });
+  geometry.translate(0, 0, -0.1);
+  geometry.rotateX(Math.PI / 2);
+  return geometry;
+}
+
+// Cyan "↑" arrow above the driven vehicle, turned to point horizontally at the target
 export function createDirectionArrow(scene) {
-  const cone = new THREE.Mesh(
-    new THREE.ConeGeometry(0.5, 1.6, 4),
-    new THREE.MeshBasicMaterial({ color: 0x29b6f6 })
-  );
-  cone.rotation.x = Math.PI / 2;
+  const arrow = new THREE.Mesh(flatArrowGeometry(), new THREE.MeshBasicMaterial({ color: 0x29b6f6 }));
   const group = new THREE.Group();
-  group.add(cone);
+  group.add(arrow);
   group.visible = false;
   scene.add(group);
 

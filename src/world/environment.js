@@ -7,6 +7,7 @@ import {
   STREETS,
   ROAD_EDGE_COLLISION,
   ROADSIDE_BARRIER_COLLISION,
+  STREET_FURNITURE_COLLISION,
   SIDEWALK_HEIGHT,
   sidewalkFixtures,
   obstacles,
@@ -30,6 +31,7 @@ const LINE_W = 0.12;
 const PARK_BAY_LENGTH = 4.81;
 const CROSSING_CLEAR = ZEBRA_LENGTH + 1;
 const ARROW_STEP = 20;
+const POLE_COLLISION_R = 0.2; // collision circle radius of lamp and traffic light poles
 const GRID_STEPS = Math.floor(WORLD_LIMIT / ARROW_STEP);
 const MANHOLE_R = 0.45;
 const DRAIN_W = 0.6;
@@ -423,6 +425,7 @@ function addTrafficLights(scene) {
   for (const l of junctionLights(main, cross)) {
     poles.push(matrixAt(l.poleX, SIDEWALK_HEIGHT + LIGHT_POLE_H / 2, l.poleZ, 0.15, LIGHT_POLE_H, 0.15));
     sidewalkFixtures.push({ x: l.poleX, z: l.poleZ });
+    if (STREET_FURNITURE_COLLISION) obstacles.push({ x: l.poleX, z: l.poleZ, r: POLE_COLLISION_R });
     // The arm runs from the pole to the head, along whichever axis separates them
     const dx = Math.abs(l.poleX - l.headX);
     const dz = Math.abs(l.poleZ - l.headZ);
@@ -471,6 +474,7 @@ function addStreetLamps(scene) {
   for (const [sx, z] of [[-1, -120], [1, -40], [-1, 40], [1, 120]]) {
     poles.push(matrixAt(sx * x, SIDEWALK_HEIGHT + LAMP_POLE_H / 2, z, 0.12, LAMP_POLE_H, 0.12));
     sidewalkFixtures.push({ x: sx * x, z });
+    if (STREET_FURNITURE_COLLISION) obstacles.push({ x: sx * x, z, r: POLE_COLLISION_R });
     heads.push(matrixAt(sx * x, SIDEWALK_HEIGHT + LAMP_POLE_H + LAMP_HEAD_H / 2, z, LAMP_HEAD_W, LAMP_HEAD_H, LAMP_HEAD_W));
   }
   addInstanced(scene, UNIT_BOX, lightPoleMat, poles);

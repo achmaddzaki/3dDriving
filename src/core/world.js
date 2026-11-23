@@ -12,7 +12,7 @@ export const ROAD_EDGE_COLLISION = false;
 // true makes roadside barriers solid for driving, except in front of parking lots
 export const ROADSIDE_BARRIER_COLLISION = true;
 // true makes street furniture solid for driving
-export const STREET_FURNITURE_COLLISION = false;
+export const STREET_FURNITURE_COLLISION = true;
 // Street lamp and traffic light pole positions { x, z }, which street furniture keeps clear of
 export const sidewalkFixtures = [];
 
