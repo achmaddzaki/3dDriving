@@ -41,8 +41,8 @@ const LIGHT_POLE_H = 5.2; // pole height above the sidewalk, so the arm clears t
 const LIGHT_ARM_T = 0.12;
 const LIGHT_HEAD_H = 1.1;
 const LIGHT_INSET = 0.6; // distance from the sidewalk outer edge to the light pole
-const LIGHT_HEAD_T = 0.3; // head thickness, which becomes its height once the head faces down
-const LENS_T = 0.04; // lens thickness, which is the lens height below the head
+const LIGHT_HEAD_T = 0.3; // head depth along its facing direction
+const LENS_T = 0.04; // lens thickness, which sticks out in front of the head
 const LAMP_POLE_H = 3.6;
 const LAMP_HEAD_W = 0.32;
 const LAMP_HEAD_H = 0.18;
@@ -401,12 +401,6 @@ function drainMatrices(s, o) {
   }
   return out;
 }
-// Matrix for a signal head turned to face down, with its long axis horizontal along rotY
-function headMatrix(x, y, z, rotY) {
-  const quat = new THREE.Quaternion().setFromEuler(new THREE.Euler(Math.PI / 2, rotY, 0, 'YXZ'));
-  const scale = new THREE.Vector3(0.4, LIGHT_HEAD_H, LIGHT_HEAD_T);
-  return new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), quat, scale);
-}
 /// <summary>
 /// Signal lights at the junction with the road at z = 80, one per approach, each over that approach's right-hand lane.
 /// </summary>
@@ -414,14 +408,12 @@ function addTrafficLights(scene) {
   const main = STREETS[0];
   const cross = STREETS.find((s) => s.alongX && s.offset === 80);
   const armY = SIDEWALK_HEIGHT + LIGHT_POLE_H;
+  // The upright head hangs directly under the end of the arm
   const headY = armY - LIGHT_ARM_T / 2 - LIGHT_HEAD_H / 2;
   const poles = [];
   const arms = [];
   const heads = [];
   const lenses = { red: [], yellow: [], green: [] };
-  const hangers = [];
-  const hangerTop = armY - LIGHT_ARM_T / 2;
-  const hangerBottom = headY + LIGHT_HEAD_T / 2;
   for (const l of junctionLights(main, cross)) {
     poles.push(matrixAt(l.poleX, SIDEWALK_HEIGHT + LIGHT_POLE_H / 2, l.poleZ, 0.15, LIGHT_POLE_H, 0.15));
     sidewalkFixtures.push({ x: l.poleX, z: l.poleZ });
@@ -430,16 +422,16 @@ function addTrafficLights(scene) {
     const dx = Math.abs(l.poleX - l.headX);
     const dz = Math.abs(l.poleZ - l.headZ);
     arms.push(matrixAt((l.poleX + l.headX) / 2, armY, (l.poleZ + l.headZ) / 2, dx + LIGHT_ARM_T, LIGHT_ARM_T, dz + LIGHT_ARM_T));
-    heads.push(headMatrix(l.headX, headY, l.headZ, l.rotY));
-    // One hanger joins the head top to the arm, since the turned head is only LIGHT_HEAD_T tall
-    hangers.push(matrixAt(l.headX, (hangerTop + hangerBottom) / 2, l.headZ, 0.08, hangerTop - hangerBottom, 0.08));
-    for (const [color, d] of [['red', -0.3], ['yellow', 0], ['green', 0.3]]) {
-      const x = l.headX + Math.sin(l.rotY) * d;
-      const z = l.headZ + Math.cos(l.rotY) * d;
-      lenses[color].push(matrixAt(x, headY - LIGHT_HEAD_T / 2 - LENS_T / 2, z, 0.26, LENS_T, 0.26, l.rotY));
+    heads.push(matrixAt(l.headX, headY, l.headZ, 0.4, LIGHT_HEAD_H, LIGHT_HEAD_T, l.rotY));
+    // Red on top, green at the bottom. Each lens sits on the front face, toward the approaching traffic.
+    const front = LIGHT_HEAD_T / 2 + LENS_T / 2;
+    for (const [color, dy] of [['red', 0.3], ['yellow', 0], ['green', -0.3]]) {
+      const x = l.headX + Math.sin(l.rotY) * front;
+      const z = l.headZ + Math.cos(l.rotY) * front;
+      lenses[color].push(matrixAt(x, headY + dy, z, 0.26, 0.26, LENS_T, l.rotY));
     }
   }
-  addInstanced(scene, UNIT_BOX, lightPoleMat, [...poles, ...arms, ...hangers]);
+  addInstanced(scene, UNIT_BOX, lightPoleMat, [...poles, ...arms]);
   addInstanced(scene, UNIT_BOX, lightHeadMat, heads);
   for (const color of Object.keys(lenses)) {
     addInstanced(scene, UNIT_BOX, lensMats[color], lenses[color]);

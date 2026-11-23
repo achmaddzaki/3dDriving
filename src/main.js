@@ -7,10 +7,11 @@ import { addTrees } from './world/tree.js';
 import { addBushes } from './world/bush.js';
 import { addLandscaping } from './world/landscaping.js';
 import { createDistanceCuller } from './core/distance-cull.js';
-import { VEHICLES, buildVehicle } from './vehicles/vehicle.js';
+import { CARGO, VEHICLES, buildVehicle } from './vehicles/vehicle.js';
 import { USER_TYPES } from './game/mission.js';
 import { createDirectionArrow, createMarker } from './game/marker.js';
 import { createMobileApp } from './game/mobile-app.js';
+import { createOrderBook } from './game/orders.js';
 
 const keys = new Set();
 let menuOpen = false;
@@ -305,14 +306,21 @@ const menuButtons = document.querySelectorAll('[data-vehicle]');
 const typeButtons = document.querySelectorAll('[data-type]');
 
 // Mission for the chosen user type, created over the current store and distributor lots
-const missionContext = { stores, distributorLot };
+// Builds the mission for a user type with the current vehicle's cargo size
+function createMissionFor(type) {
+  return type.createMission({ stores, distributorLot, cargo: CARGO[vehicle.id] });
+}
 let userType = USER_TYPES[0];
-let mission = userType.createMission(missionContext);
+let mission = createMissionFor(userType);
 const marker = createMarker(scene);
 const vehicleArrow = createDirectionArrow(scene);
+const orderBook = createOrderBook();
 const mobileApp = createMobileApp({
+  orders: orderBook,
   onCheckIn: () => mission.checkIn(),
   onCheckOut: () => mission.checkOut(),
+  onTask: () => mission.task(),
+  onDepot: (action) => mission.depotAction(action),
 });
 
 function setMenu(open) {
@@ -334,6 +342,8 @@ function selectVehicle(id) {
   next.returnTimer = null;
   active = next;
   vehicle = next.def;
+  // Missions that depend on the vehicle start over with the new cargo size
+  if (userType.usesVehicle) mission = createMissionFor(userType);
   Object.assign(car, { x: next.pose.x, z: next.pose.z, heading: next.pose.heading, speed: 0, steer: 0 });
   syncCarMesh(0);
 
@@ -346,7 +356,7 @@ function selectUserType(id) {
   const next = USER_TYPES.find((t) => t.id === id);
   if (!next || next === userType) return;
   userType = next;
-  mission = userType.createMission(missionContext);
+  mission = createMissionFor(userType);
   resetCar();
   syncCarMesh(0);
   userTypeEl.textContent = `User: ${userType.name}`;
@@ -383,14 +393,18 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// Shows the lot marker on the target, and the arrow above the car turned toward it
-function updateTargetMarkers(target, time) {
+// Shows the lot marker on the target, and the arrow above the car turned toward it unless the mission hides it
+function updateTargetMarkers(target, time, showDirection) {
   if (!target) {
     marker.hide();
     vehicleArrow.hide();
     return;
   }
   marker.show(target, time);
+  if (!showDirection) {
+    vehicleArrow.hide();
+    return;
+  }
   const tx = (target.minX + target.maxX) / 2;
   const tz = (target.minZ + target.maxZ) / 2;
   const yaw = Math.atan2(tx - car.x, tz - car.z);
@@ -408,10 +422,10 @@ function frame(now) {
     updateReturns(dt);
     mission.update(car, dt);
   }
-  updateTargetMarkers(mission.target(car), now / 1000);
+  updateTargetMarkers(mission.target(car), now / 1000, !mission.hidesDirection);
   updateCamera(dt);
   updateHud();
-  mobileApp.update(mission.visitState());
+  mobileApp.update(mission.phone(car));
   distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

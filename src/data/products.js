@@ -1,0 +1,23 @@
+// Dummy product catalog. Prices are in Rupiah (IDR). Each product is sold in its own unit.
+export const PRODUCTS = [
+  { name: 'Mineral Water 600ml', price: 3000, unit: 'bottle' },
+  { name: 'Instant Coffee Sachet', price: 2000, unit: 'sachet' },
+  { name: 'Cooking Oil 1L', price: 16000, unit: 'bottle' },
+  { name: 'Instant Noodles', price: 3500, unit: 'pack' },
+  { name: 'Bar Soap 85g', price: 4500, unit: 'pcs' },
+  { name: 'Shampoo Sachet', price: 1000, unit: 'sachet' },
+  { name: 'Biscuit Pack', price: 6000, unit: 'pack' },
+  { name: 'Soft Drink 330ml', price: 4000, unit: 'can' },
+  { name: 'Sugar 1kg', price: 15000, unit: 'pack' },
+  { name: 'Rice 5kg', price: 75000, unit: 'bag' },
+  { name: 'Laundry Detergent 800g', price: 22000, unit: 'pack' },
+  { name: 'Toothpaste 150g', price: 12000, unit: 'pcs' },
+  { name: 'Cigarettes 12s', price: 25000, unit: 'pack' },
+  { name: 'Hand Sanitizer 60ml', price: 9000, unit: 'bottle' },
+  { name: 'Chili Sauce 340ml', price: 8500, unit: 'bottle' },
+  { name: 'Sanitary Pads 8s', price: 7000, unit: 'pack' },
+  { name: 'Energy Drink 250ml', price: 7500, unit: 'can' },
+  { name: 'Wafer Chocolate', price: 2500, unit: 'box' },
+  { name: 'Dishwashing Liquid 800ml', price: 17000, unit: 'bottle' },
+  { name: 'Tissue Box 180s', price: 11000, unit: 'box' },
+];

@@ -19,6 +19,42 @@ function limb(g, mat, from, to, thickness) {
   g.add(mesh);
 }
 
+// Simplidots logos for cargo bodies: the full logo for trucks, the red square mark for bikes
+const LOGOS = {
+  full: { url: new URL('../img/logo_simpli.svg', import.meta.url).href, aspect: 158 / 42 },
+  mark: { url: new URL('../img/logo_simpli_red.svg', import.meta.url).href, aspect: 40 / 42 },
+};
+const logoLoader = new THREE.TextureLoader();
+
+// One flat logo plane at (x, y, z), facing the direction `rotY` (0 faces +Z)
+function addLogoPlane(g, logo, { x, y, z, rotY, width }) {
+  const { url, aspect } = LOGOS[logo];
+  const mat = new THREE.MeshBasicMaterial({ transparent: true });
+  const plane = new THREE.Mesh(new THREE.PlaneGeometry(width, width / aspect), mat);
+  plane.visible = false; // shown once the image has loaded, so no blank plane appears
+  plane.position.set(x, y, z);
+  plane.rotation.y = rotY;
+  g.add(plane);
+  logoLoader.load(url, (tex) => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    mat.map = tex;
+    mat.needsUpdate = true;
+    plane.visible = true;
+  });
+}
+
+// Logo on the left and right sides of a box centered at (x, y, z), with half-width `x`
+function addLogoSides(g, logo, { x, y, z, width }) {
+  for (const side of [-1, 1]) {
+    addLogoPlane(g, logo, { x: side * (x + 0.01), y, z, rotY: side * (Math.PI / 2), width });
+  }
+}
+
+// Logo on the back of a box, where `zBack` is the z of its back face
+function addLogoBack(g, logo, { x, y, zBack, width }) {
+  addLogoPlane(g, logo, { x, y, z: zBack - 0.01, rotY: Math.PI, width });
+}
+
 // Shared motorbike base. Each bike variant adds its own cargo.
 const BIKE_COLLIDERS = [{ z: 0.9, r: 0.5 }, { z: -0.9, r: 0.5 }];
 const BIKE = {
@@ -72,13 +108,26 @@ function makeBike(id, name, description, cargoColliders, buildCargo) {
 // Vehicle definitions.
 // Models face +Z. Collision circles (`colliders`) are placed at z offsets along the vehicle.
 // `wheels` lists wheel positions; `front` wheels steer.
+// Driver starting stock per vehicle: `scale` multiplies each product's quantity, `products` is how many product kinds it carries
+export const CARGO = {
+  'bike-small': { scale: 0.4, products: 2 },
+  'bike-sides': { scale: 0.6, products: 3 },
+  'bike-big': { scale: 0.8, products: 3 },
+  pickup: { scale: 1.2, products: 5 },
+  boxcar: { scale: 2, products: 8 },
+  container: { scale: 3, products: 10 },
+};
+
 export const VEHICLES = [
   makeBike(
     'bike-small',
     'Motorbike + Small Cargo',
     'Light bike with one small box behind',
     [{ z: -1.2, r: 0.4 }],
-    (g, m) => g.add(box(0.5, 0.35, 0.4, m.metal, 0, 0.95, -1.15))
+    (g, m) => {
+      g.add(box(0.5, 0.35, 0.4, m.cargo, 0, 0.95, -1.15));
+      addLogoBack(g, 'mark', { x: 0, y: 0.95, zBack: -1.35, width: 0.3 });
+    }
   ),
   makeBike(
     'bike-sides',
@@ -86,8 +135,9 @@ export const VEHICLES = [
     'Bike with a cargo box on the left and right',
     [{ z: -0.5, r: 0.6 }],
     (g, m) => {
-      g.add(box(0.25, 0.45, 0.6, m.metal, -0.45, 0.7, -0.5));
-      g.add(box(0.25, 0.45, 0.6, m.metal, 0.45, 0.7, -0.5));
+      g.add(box(0.25, 0.45, 0.6, m.cargo, -0.45, 0.7, -0.5));
+      g.add(box(0.25, 0.45, 0.6, m.cargo, 0.45, 0.7, -0.5));
+      addLogoSides(g, 'mark', { x: 0.575, y: 0.7, z: -0.5, width: 0.4 });
     }
   ),
   makeBike(
@@ -95,7 +145,10 @@ export const VEHICLES = [
     'Motorbike + Big Cargo',
     'Bike with a large cargo box behind',
     [{ z: -1.4, r: 0.6 }],
-    (g, m) => g.add(box(0.8, 0.6, 0.9, m.metal, 0, 1.15, -1.3))
+    (g, m) => {
+      g.add(box(0.8, 0.6, 0.9, m.cargo, 0, 1.15, -1.3));
+      addLogoBack(g, 'mark', { x: 0, y: 1.15, zBack: -1.75, width: 0.55 });
+    }
   ),
   {
     ...COMMON,
@@ -162,6 +215,7 @@ export const VEHICLES = [
       g.add(box(2.2, 1.6, 1.8, m.paint, 0, 1.6, 2.2));
       g.add(box(1.9, 0.7, 0.05, m.glass, 0, 1.9, 3.13));
       g.add(box(2.4, 2.8, 4.5, m.accent, 0, 2.4, -1.0));
+      addLogoSides(g, 'full', { x: 1.2, y: 2.4, z: -1.0, width: 2.8 });
       g.add(box(0.4, 0.15, 0.1, m.light, -0.7, 0.9, 3.13));
       g.add(box(0.4, 0.15, 0.1, m.light, 0.7, 0.9, 3.13));
     },
@@ -172,7 +226,7 @@ export const VEHICLES = [
     name: 'Container Car',
     description: 'Long truck pulling a big container',
     color: 0xd62828,
-    accent: 0x2e7d32,
+    accent: 0xffffff,
     wheelBase: 6.5,
     wheelRadius: 0.5,
     wheelWidth: 0.45,
@@ -198,6 +252,7 @@ export const VEHICLES = [
       g.add(box(2.1, 0.9, 0.05, m.glass, 0, 1.9, 7.02));
       g.add(box(2.2, 0.4, 11, m.dark, 0, 0.6, -0.5));
       g.add(box(2.6, 2.8, 9.5, m.accent, 0, 2.4, -1.5));
+      addLogoSides(g, 'full', { x: 1.3, y: 2.4, z: -1.5, width: 4.5 });
     },
   },
 ];
@@ -211,6 +266,7 @@ export function buildVehicle(v) {
     glass: lam(0x222c3a),
     dark: lam(0x2b2b2b),
     metal: lam(0x9e9e9e),
+    cargo: lam(0xffffff),
     light: lam(0xfff59d),
     helmet: lam(0xf1c27d),
   };

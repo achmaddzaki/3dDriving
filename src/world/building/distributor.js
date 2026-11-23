@@ -11,7 +11,7 @@ const SIGN_COLOR = 0x1565c0;
 const SPOT_SPACING = 6;
 const STREET_SIDE = { nx: 1, nz: 0 }; // the main road is on the +X side of the lot
 
-const DOOR_WIDTH = 4;
+const DOOR_WIDTH = 6;
 const DOOR_HEIGHT = 4.5;
 const DOOR_THICKNESS = 0.12;
 const DOOR_SLATS = 3;
@@ -37,7 +37,7 @@ export function buildDistributor(scene, lot, spotCount) {
   const warehouse = addBlock(scene, warehouseRect, WAREHOUSE_HEIGHT, WAREHOUSE_COLOR);
   addRoofTrim(scene, warehouse.cx, warehouse.cz, warehouse.w, WAREHOUSE_HEIGHT, warehouse.d);
   addRoadSign(scene, warehouse.cx, warehouse.cz, warehouse.w, warehouse.d, STREET_SIDE, SIGN_COLOR, SIGN_Y_ABOVE_DOORS);
-  addShopLabel(scene, warehouse.cx, warehouse.cz, warehouse.w, warehouse.d, STREET_SIDE, 'Distributor', SIGN_COLOR, SIGN_Y_ABOVE_DOORS);
+  addShopLabel(scene, warehouse.cx, warehouse.cz, warehouse.w, warehouse.d, STREET_SIDE, 'PT. Simple Mandiri', SIGN_COLOR, SIGN_Y_ABOVE_DOORS);
   addLoadingDoors(scene, warehouseRect, [lot.minZ + 10, lot.minZ + 23, lot.minZ + 36]);
 
   addBoxStack(scene, lot.minX + 19.5, lot.minZ + 50, 2, 2, 3);

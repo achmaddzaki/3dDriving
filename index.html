@@ -148,8 +148,18 @@
     }
     .app-btn.primary { background: #1e88e5; color: #fff; }
     .app-btn:hover { filter: brightness(0.95); }
-    #mobile[data-state="arrived"] [data-show~="arrived"],
-    #mobile[data-state="checkedIn"] [data-show~="checkedIn"] { display: block; }
+    #mobile[data-state="arrived"] [data-show~="arrived"] { display: block; }
+    .app-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .app-label { color: #5b6676; }
     #mobile-toast {
       position: absolute;
       left: 50%;
@@ -178,6 +188,63 @@
       padding: 0 0 0 5px;
       text-align: left;
       font-size: 18px;
+    }
+    .app-screen {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    [hidden] { display: none !important; }
+    .app-list small { display: block; color: #5b6676; font-size: 11px; }
+    .app-btn.always { display: block; }
+    .app-list {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .app-list li,
+    .app-line {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    .app-list li.current span { font-weight: 700; }
+    .app-total { font-size: 16px; font-weight: 700; display: inline-block; }
+    .app-total.bump { animation: bump 0.4s ease-out; }
+    .app-lines {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+    }
+    .app-line {
+      transition: transform 0.6s ease-in, opacity 0.6s ease-in;
+    }
+    .app-line.fly {
+      transform: translate(160px, -140px) scale(0.4) rotate(14deg);
+      opacity: 0;
+    }
+    @keyframes bump {
+      50% { transform: scale(1.15); }
     }
   </style>
   <script type="importmap">
@@ -223,10 +290,9 @@
       <h3 class="section-title">User type</h3>
       <div class="option-grid">
         <button data-type="salesman"><strong>Salesman</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
-        <button data-type="canvasser"><strong>Canvasser</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
-        <button data-type="driver"><strong>Driver</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
-        <button data-type="collector"><strong>Collector</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
-        <button data-type="surveyor"><strong>Surveyor</strong><span>Check in and out at 15 stores, then return to the distributor</span></button>
+        <button data-type="canvasser"><strong>Canvasser</strong><span>Invoice any store from your stock until it is sold out</span></button>
+        <button data-type="driver"><strong>Driver</strong><span>Drop the ordered products at each listed customer</span></button>
+        <button data-type="collector"><strong>Collector</strong><span>Collect the debt from each listed customer</span></button>
       </div>
       <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
     </div>
@@ -237,13 +303,53 @@
     <div class="phone">
       <div class="phone-screen">
         <div class="app-header">Distributor App</div>
-        <div id="mobile-store" class="app-store"></div>
-        <p id="mobile-text" class="app-text"></p>
-        <div class="app-actions">
-          <button id="mobile-checkin" class="app-btn primary" data-show="arrived">Check in</button>
-          <button id="mobile-order" class="app-btn" data-show="checkedIn">Create order</button>
-          <button id="mobile-photo" class="app-btn" data-show="checkedIn">Take picture</button>
-          <button id="mobile-checkout" class="app-btn primary" data-show="checkedIn">Check out</button>
+        <div id="main-screen" class="app-screen">
+          <div id="main-total" class="app-total"></div>
+          <div id="mobile-store" class="app-store"></div>
+          <p id="mobile-text" class="app-text"></p>
+          <ol id="mobile-list" class="app-list"></ol>
+          <div class="app-actions">
+            <button id="mobile-checkin" class="app-btn primary" data-show="arrived">Check in</button>
+          </div>
+        </div>
+        <div id="detail-screen" class="app-screen" hidden>
+          <div class="app-header">Customer detail</div>
+          <div class="app-card">
+            <div id="detail-store" class="app-total"></div>
+            <div><span class="app-label">Owner</span> <span id="detail-owner"></span></div>
+            <div><span class="app-label">Address</span> <span id="detail-address"></span></div>
+            <div><span class="app-label">Phone</span> <span id="detail-phone"></span></div>
+            <div id="detail-info" class="app-text"></div>
+            <div id="detail-total" class="app-text"></div>
+          </div>
+          <div class="app-actions">
+            <button id="detail-task" class="app-btn always primary"></button>
+            <button id="detail-photo" class="app-btn always">Take picture</button>
+            <button id="detail-checkout" class="app-btn always primary">Check out</button>
+          </div>
+        </div>
+        <div id="order-screen" class="app-screen" hidden>
+          <div id="order-title" class="app-header">Create order</div>
+          <div id="order-store" class="app-store"></div>
+          <div id="order-total" class="app-total"></div>
+          <ul id="order-lines" class="app-lines"></ul>
+          <div class="app-actions">
+            <button id="order-add" class="app-btn always">Add product</button>
+            <button id="order-save" class="app-btn always primary">Save order</button>
+            <button id="order-back" class="app-btn always">Back</button>
+          </div>
+        </div>
+        <div id="depot-screen" class="app-screen" hidden>
+          <div class="app-header">Distributor</div>
+          <p class="app-text">Refill your stock to the starting amount, or end the mission.</p>
+          <div class="app-card">
+            <div class="app-label">Stock</div>
+          </div>
+          <ul id="depot-stock" class="app-lines"></ul>
+          <div class="app-actions">
+            <button id="depot-refill" class="app-btn always primary">Refill stock</button>
+            <button id="depot-end" class="app-btn always">End mission</button>
+          </div>
         </div>
       </div>
       <div id="mobile-toast"></div>
