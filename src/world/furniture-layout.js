@@ -124,7 +124,7 @@ function isClear(p, type, placed, lots, fixtures) {
 function tryPlace(type, rng, placed, lots, fixtures) {
   const si = Math.floor(rng() * STREETS.length);
   const sd = rng() < 0.5 ? -1 : 1;
-  const t = -WORLD_LIMIT + rng() * 2 * WORLD_LIMIT;
+  const t = (rng() * 2 - 1) * STREETS[si].span;
   const v = type.v + (rng() * 2 - 1) * JITTER;
   const colorDraw = rng();
   if (!inSidewalkBand(type, v)) return null;

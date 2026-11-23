@@ -95,6 +95,7 @@
     .option-grid button span { font-size: 13px; color: #b0bac9; }
     .option-grid button:hover { background: #34405299; border-color: #4fc3f7; }
     .option-grid button.active { border-color: #ffb300; }
+    .option-grid button:focus-visible { outline: none; border-color: #4fc3f7; }
     .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
     #mobile {
       position: fixed;
@@ -114,7 +115,7 @@
       inset: 0;
       background: #111;
       border-radius: 28px;
-      padding: 34px 14px 20px 36px;
+      padding: 14px;
       box-sizing: border-box;
       box-shadow: -6px 10px 24px rgba(0, 0, 0, 0.5);
       color: #fff;
@@ -132,6 +133,15 @@
       overflow: hidden;
     }
     .app-header { font-weight: 700; font-size: 15px; }
+    .app-brand {
+      margin: -14px -14px 0;
+      padding: 12px 14px;
+      background: #EB3B5A;
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      border-radius: 14px 14px 0 0;
+    }
     .app-store { font-size: 13px; color: #5b6676; }
     .app-text { margin: 0; font-size: 14px; line-height: 1.4; }
     .app-actions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
@@ -181,14 +191,14 @@
       left: 0;
       top: 0;
       bottom: 0;
-      width: 36px;
+      width: 14px;
       border: none;
       background: transparent;
       cursor: pointer;
-      padding: 0 0 0 5px;
-      text-align: left;
-      font-size: 18px;
+      padding: 0;
+      font-size: 12px;
     }
+    #mobile:not(.open) .phone-screen { pointer-events: none; }
     .app-screen {
       flex: 1;
       min-height: 0;
@@ -260,7 +270,6 @@
 
   <div id="hud" class="panel">
     <div id="speed">0 km/h</div>
-    <div id="gear">Gear: D</div>
     <div id="vehicle">Vehicle</div>
     <div id="user-type">User: Salesman</div>
     <div id="mission">Mission</div>
@@ -302,7 +311,7 @@
     <button id="mobile-handle" aria-label="Show or hide the mobile app">📱</button>
     <div class="phone">
       <div class="phone-screen">
-        <div class="app-header">Distributor App</div>
+        <div class="app-brand">Simplidots</div>
         <div id="main-screen" class="app-screen">
           <div id="main-total" class="app-total"></div>
           <div id="mobile-store" class="app-store"></div>

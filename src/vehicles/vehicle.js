@@ -235,6 +235,8 @@ export const VEHICLES = [
     accel: 6,
     brake: 18,
     maxSteer: 0.38,
+    turnRateScale: 0.75, // a little quicker turning than the default
+    checkReach: 10, // meters from the store lot where it can check in, so it works from the road in front
     cameraDistance: 14,
     cameraHeight: 7.5,
     colliders: [{ z: 5.5, r: 1.3 }, { z: 1.0, r: 1.5 }, { z: -3.0, r: 1.5 }, { z: -5.5, r: 1.4 }],

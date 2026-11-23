@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { WORLD_LIMIT, ZONES, inRect, grow, range, rand, obstacles } from '../core/world.js';
 
-const TREE_COUNT = 600;
+const TREE_COUNT = 6000;
 const TRUNK_COLOR = 0x6b4423;
 
 // Materials are shared by color so every tree reuses them

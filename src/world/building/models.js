@@ -1,10 +1,10 @@
 import { rand } from '../../core/world.js';
 
-// Each category's weight is its share of all lots. Models inside a category are picked evenly.
+// Each category's weight is relative to the others. Models inside a category are picked evenly.
 // `along` and `perp` are the building footprint size, `height` is the building height range.
 const CATEGORIES = [
   {
-    weight: 0.5,
+    weight: 0.8,
     models: [
       { name: 'Residence A', kind: 'building', along: [10, 14], perp: [8, 11], height: [8, 12], colors: [0xf5e6c8] },
       { name: 'Residence B', kind: 'building', along: [8, 11], perp: [8, 10], height: [10, 14], colors: [0xb5651d] },
@@ -37,6 +37,14 @@ const CATEGORIES = [
       { name: 'Park', kind: 'park', along: [14, 22], perp: [12, 16], height: [0, 0], colors: [0x66bb6a] },
     ],
   },
+  {
+    weight: 0.1,
+    models: [
+      { name: 'Seating Area', kind: 'seating', along: [10, 14], perp: [6, 8], height: [0, 0], colors: [0x66bb6a] },
+      { name: 'Garden Plot', kind: 'garden', along: [12, 16], perp: [8, 10], height: [0, 0], colors: [0x66bb6a] },
+      { name: 'Pocket Park', kind: 'pocket', along: [16, 22], perp: [14, 18], height: [0, 0], colors: [0x66bb6a] },
+    ],
+  },
 ];
 
 const OWNER_NAMES = ['Budi', 'Toni', 'Andi', 'Siti', 'Dewi', 'Rina', 'Agus', 'Lina', 'Joko', 'Maya'];
@@ -51,9 +59,10 @@ export function randomShopName(noun) {
   return pickOne([`${name}'s ${noun}`, `${name} ${noun}`, `${noun} ${name}`]);
 }
 
-// Picks a model by category weight, then evenly within the category
+// Picks a model by category weight, then evenly within the category. Weights are relative, so they need not sum to 1.
 export function pickModel() {
-  let r = rand();
+  const total = CATEGORIES.reduce((sum, c) => sum + c.weight, 0);
+  let r = rand() * total;
   for (const c of CATEGORIES) {
     if (r < c.weight) return pickOne(c.models);
     r -= c.weight;

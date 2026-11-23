@@ -46,7 +46,7 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 
 - `index.html` - page layout, HUD, import map for Three.js
 - `src/main.js` - renderer, car physics, collisions, chase camera, menu, game loop
-- `src/core/world.js` - shared world size, street layout, collision obstacles, random helpers, and the `ROAD_EDGE_COLLISION` switch for curb and barrier collisions (default off) and the `STREET_FURNITURE_COLLISION` switch for furniture collisions (default off)
+- `src/core/world.js` - shared world size, street layout (every road ends on a ring road around the town), collision obstacles, random helpers, and the `ROAD_EDGE_COLLISION` switch for curb and barrier collisions (default off) and the `STREET_FURNITURE_COLLISION` switch for furniture collisions (default off)
 - `src/core/primitives.js` - box and sphere mesh helpers
 - `src/core/distance-cull.js` - hides static world objects beyond `RENDER_DISTANCE` (set in `main.js`) from the camera
 - `src/vehicles/vehicle.js` - vehicle definitions and models (motorbikes, pickup, box car, container car)
@@ -58,7 +58,9 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/data/customers.js` - dummy owner, address and phone for each store's customer detail page
 - `src/game/orders.js` - per-store order totals, kept for the session, and Rp formatting
 - `src/world/environment.js` - ground, roads, sidewalks with raised curbs, crossings, lane and parking markings, arrows, manhole covers, storm drains, street name signs, and roadside barriers
-- `src/world/building/town.js` - parking lot layout and placement
+- `src/world/building/town.js` - parking lot layout and placement, including park, seating area, and garden plot lots
+- `src/world/building/public-space.js` - contents of public lots: seating areas (at the sidewalk edge), garden plots, and pocket parks (paths, round bed, corner features, fence or hedge border)
+- `src/world/building/lot-decor.js` - parking spaces with white lines, 0 to 2 parked cars and 0 to 2 motorbikes in the spaces, and 2 to 5 bins, planters, cones, bollards, crate stacks, or flower beds beside or behind each building, all with collision
 - `src/world/building/models.js` - building and park models with category weights
 - `src/world/building/facade.js` - windows, doors, roof trim, and store signs
 - `src/world/building/park.js` - park contents (fountain, benches, corner flower beds, planters)
@@ -66,6 +68,7 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/world/furniture-layout.js` - placement rules for street furniture (seeded, no `rand()`)
 - `src/world/street-furniture.js` - street furniture meshes: lamps, benches, trash bins, bus shelters, mailboxes, newspaper stands, vending machines, electrical boxes, fire hydrants, and advertising boards
 - `src/world/tree.js` - ten tree models (adds Cherry Blossom, Cypress, Willow, Topiary) and tree placement
-- `src/world/landscaping.js` - 16 fenced or hedged neighborhood parks plus roadside seating areas, garden plots, flower beds, hedges, grass patches, and planter rows (own seeded generator)
-- `src/world/landscape-parts.js` - builders for flower beds, hedges, fences, planters, grass patches, and seating areas
+- `src/world/landscaping.js` - ponds scattered by the roadside (own seeded generator)
+- `src/world/landscape-parts.js` - builders for flower beds, hedges, fences, planters, and seating areas
 - `src/world/bush.js` - five bush decoration models and placement
+- `src/world/grass.js` - grass tufts scattered over open ground, away from roads, lots, and landscaped areas

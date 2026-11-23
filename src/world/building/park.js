@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { box } from '../../core/primitives.js';
-import { createContext, flushContext, frame, mulberry32, addFlowerBed, addPlanter } from '../landscape-parts.js';
+import { createContext, flushContext, frame, mulberry32, addFlowerBed, addHedgeRun, addPlanter } from '../landscape-parts.js';
+
+const ENTRY_HALF = 2; // half width of the gate gap in the middle of each side
 
 const STONE_MAT = new THREE.MeshLambertMaterial({ color: 0xbdbdbd });
 const WATER_MAT = new THREE.MeshLambertMaterial({ color: 0x4fc3f7 });
@@ -31,5 +33,22 @@ function addParkGardens(scene, lot, cx, cz) {
     for (const sz of [-1, 1]) addFlowerBed(ctx, frame(cx + sx * reachX, cz + sz * reachZ, 0), 0, 0, 2.6, 2.6);
     addPlanter(ctx, frame(cx + sx * 5.4, cz, 0), 0, 0);
   }
+  addHedgeBorder(lot, cx, cz, ctx);
   flushContext(ctx);
+}
+
+// Hedge around all four sides, with a gate gap in the middle of each side
+function addHedgeBorder(lot, cx, cz, ctx) {
+  const x0 = lot.minX + 0.5;
+  const x1 = lot.maxX - 0.5;
+  const z0 = lot.minZ + 0.5;
+  const z1 = lot.maxZ - 0.5;
+  for (const z of [z0, z1]) {
+    addHedgeRun(ctx, x0, z, cx - ENTRY_HALF, z);
+    addHedgeRun(ctx, cx + ENTRY_HALF, z, x1, z);
+  }
+  for (const x of [x0, x1]) {
+    addHedgeRun(ctx, x, z0, x, cz - ENTRY_HALF);
+    addHedgeRun(ctx, x, cz + ENTRY_HALF, x, z1);
+  }
 }

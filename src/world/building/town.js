@@ -13,11 +13,13 @@ import {
 import { pickModel, randomShopName } from './models.js';
 import { addFacades, addGableRoof, addRoadSign, addRoofTrim, addShopLabel } from './facade.js';
 import { addParkContents } from './park.js';
+import { addPublicContents } from './public-space.js';
 import { buildDistributor } from './distributor.js';
+import { addParking, flushParking } from './lot-decor.js';
 
-const LOT_CHANCE = 0.15;
-const SLOT_STEP = 10;
-const LOT_GAP = 3;
+const LOT_CHANCE = 0.3;
+const SLOT_STEP = 5;
+const LOT_GAP = 1;
 
 const lotMat = new THREE.MeshLambertMaterial({ color: 0x5a5a5e });
 const lawnMat = new THREE.MeshLambertMaterial({ color: 0x66bb6a });
@@ -33,14 +35,15 @@ export function buildTown(scene, spotCount) {
   const distributor = addDistributor(scene, lots, spotCount);
   for (const s of STREETS) {
     for (const side of [-1, 1]) {
-      let t = -WORLD_LIMIT;
-      while (t < WORLD_LIMIT) {
+      let t = -s.span;
+      while (t < s.span) {
         const spec = makeSpec(pickModel());
         const placed = rand() <= LOT_CHANCE && tryAddLot(scene, lots, stores, s, side, t, spec);
         t += placed ? spec.lotAlong + LOT_GAP : SLOT_STEP;
       }
     }
   }
+  flushParking(scene);
   return { lots, stores, spots: distributor.spots, distributorLot: distributor.lot };
 }
 
@@ -90,15 +93,19 @@ function tryAddLot(scene, lots, stores, s, side, t, spec) {
   if (!insideWorld) return false;
   if (ZONES.some((r) => rectsOverlap(r, lot)) || lots.some((l) => rectsOverlap(l, lot))) return false;
 
-  const isPark = spec.model.kind === 'park';
+  const kind = spec.model.kind;
+  const isLawn = kind !== 'building';
   const name = spec.model.sign ? randomShopName(spec.model.name) : null;
   lots.push(lot);
   if (name) stores.push({ name, rect: lot });
-  addLotSurface(scene, lot, isPark ? lawnMat : lotMat);
-  if (isPark) {
+  addLotSurface(scene, lot, isLawn ? lawnMat : lotMat);
+  if (kind === 'park') {
     addParkContents(scene, lot);
+  } else if (isLawn) {
+    addPublicContents(scene, s, side, lot, kind);
   } else {
-    addBuildingInLot(scene, s, side, t, spec, name);
+    const building = addBuildingInLot(scene, s, side, t, spec, name);
+    addParking(s, side, t, spec.lotAlong, lot, building);
   }
   return true;
 }
@@ -135,4 +142,5 @@ function addBuildingInLot(scene, s, side, t, spec, name) {
     addRoadSign(scene, x, z, w, d, road, spec.model.sign);
     addShopLabel(scene, x, z, w, d, road, name, spec.model.sign);
   }
+  return { minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 };
 }

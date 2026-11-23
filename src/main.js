@@ -5,6 +5,7 @@ import { addStreetFurniture } from './world/street-furniture.js';
 import { buildTown } from './world/building/town.js';
 import { addTrees } from './world/tree.js';
 import { addBushes } from './world/bush.js';
+import { addGrass } from './world/grass.js';
 import { addLandscaping } from './world/landscaping.js';
 import { createDistanceCuller } from './core/distance-cull.js';
 import { CARGO, VEHICLES, buildVehicle } from './vehicles/vehicle.js';
@@ -19,6 +20,10 @@ let menuOpen = false;
 window.addEventListener('keydown', (e) => {
   if (e.code === 'Escape') {
     setMenu(!menuOpen);
+    return;
+  }
+  if (menuOpen) {
+    handleMenuKey(e);
     return;
   }
   keys.add(e.code);
@@ -54,7 +59,7 @@ sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, far: 300 });
 sun.shadow.camera.updateProjectionMatrix();
-scene.add(sun, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
+scene.add(sun, sun.target, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
 
 // World: roads and sidewalks, then parking lots with buildings, then gardens, then trees
 buildEnvironment(scene);
@@ -64,6 +69,7 @@ addStreetFurniture(scene, lots, sidewalkFixtures);
 const gardens = addLandscaping(scene, lots);
 addTrees(scene, [...lots, ...gardens]);
 addBushes(scene, [...lots, ...gardens]);
+addGrass(scene, [...lots, ...gardens]);
 
 // Static world objects beyond RENDER_DISTANCE are hidden, so the GPU only draws what is nearby
 const RENDER_DISTANCE = 200; // meters from the camera; raise for a longer view, lower for speed
@@ -106,7 +112,7 @@ const fleet = VEHICLES.map((def, i) => {
 
 let active = fleet[0];
 let vehicle = active.def;
-const car = { x: 0, z: 0, heading: 0, speed: 0, steer: 0, wheelAngle: 0 };
+const car = { x: 0, z: 0, heading: 0, speed: 0, steer: 0, wheelAngle: 0, reach: vehicle.checkReach ?? 0 };
 Object.assign(car, active.pose);
 
 function resetCar() {
@@ -284,16 +290,20 @@ function updateCamera(dt, snap = false) {
 }
 
 const speedEl = document.getElementById('speed');
-const gearEl = document.getElementById('gear');
 const vehicleEl = document.getElementById('vehicle');
 
 const userTypeEl = document.getElementById('user-type');
 const missionEl = document.getElementById('mission');
 let shownMissionText = '';
 
+// The shadow box is fixed at ±80 m, so it follows the car to shade the buildings around it
+function updateSun() {
+  sun.target.position.set(car.x, 0, car.z);
+  sun.position.set(car.x + 60, 100, car.z + 40);
+}
+
 function updateHud() {
   speedEl.textContent = `${Math.round(Math.abs(car.speed) * 3.6)} km/h`;
-  gearEl.textContent = car.speed < -0.1 ? 'Gear: R' : 'Gear: D';
   const text = mission.status().join('\n');
   if (text === shownMissionText) return;
   shownMissionText = text;
@@ -326,7 +336,76 @@ const mobileApp = createMobileApp({
 function setMenu(open) {
   menuOpen = open;
   menuEl.classList.toggle('hidden', !open);
-  if (open) keys.clear();
+  if (open) {
+    keys.clear();
+    focusActiveOption();
+  }
+}
+
+// Menu keyboard navigation: arrows or WASD move the focus, Enter picks the focused option
+const menuGrids = [...document.querySelectorAll('#menu .option-grid')].map((g) => [...g.querySelectorAll('button')]);
+let menuGrid = 0;
+let menuCell = 0;
+
+function focusMenuCell(grid, cell) {
+  menuGrid = grid;
+  menuCell = cell;
+  menuGrids[grid][cell].focus();
+}
+
+// Starts on the vehicle that is driven now
+function focusActiveOption() {
+  const idx = menuGrids[0].findIndex((b) => b.classList.contains('active'));
+  focusMenuCell(0, Math.max(0, idx));
+}
+
+// Keeps the cursor in step with a focus change made by the mouse
+function syncMenuCursor() {
+  menuGrids.forEach((buttons, grid) => {
+    const cell = buttons.indexOf(document.activeElement);
+    if (cell >= 0) {
+      menuGrid = grid;
+      menuCell = cell;
+    }
+  });
+}
+
+// Moves within a two-column grid. Past its top or bottom row, the focus goes to the neighboring grid.
+function moveMenuFocus(dx, dy) {
+  const buttons = menuGrids[menuGrid];
+  if (dx !== 0) {
+    const cell = menuCell + dx;
+    const sameRow = Math.floor(cell / 2) === Math.floor(menuCell / 2);
+    if (sameRow && cell >= 0 && cell < buttons.length) focusMenuCell(menuGrid, cell);
+    return;
+  }
+  const cell = menuCell + dy * 2;
+  if (cell >= 0 && cell < buttons.length) return focusMenuCell(menuGrid, cell);
+  const next = menuGrid + dy;
+  if (next < 0 || next >= menuGrids.length) return;
+  const len = menuGrids[next].length;
+  const col = menuCell % 2;
+  const target = dy > 0 ? col : Math.floor((len - 1) / 2) * 2 + col;
+  focusMenuCell(next, Math.min(target, len - 1));
+}
+
+const MENU_MOVES = {
+  ArrowUp: [0, -1], KeyW: [0, -1],
+  ArrowDown: [0, 1], KeyS: [0, 1],
+  ArrowLeft: [-1, 0], KeyA: [-1, 0],
+  ArrowRight: [1, 0], KeyD: [1, 0],
+};
+
+function handleMenuKey(e) {
+  syncMenuCursor();
+  const move = MENU_MOVES[e.code];
+  if (move) {
+    e.preventDefault();
+    moveMenuFocus(...move);
+  } else if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+    e.preventDefault();
+    menuGrids[menuGrid][menuCell].click();
+  }
 }
 
 // Drives the picked vehicle from its current spot and starts the return timer for the previous one.
@@ -342,6 +421,7 @@ function selectVehicle(id) {
   next.returnTimer = null;
   active = next;
   vehicle = next.def;
+  car.reach = vehicle.checkReach ?? 0;
   // Missions that depend on the vehicle start over with the new cargo size
   if (userType.usesVehicle) mission = createMissionFor(userType);
   Object.assign(car, { x: next.pose.x, z: next.pose.z, heading: next.pose.heading, speed: 0, steer: 0 });
@@ -411,6 +491,10 @@ function updateTargetMarkers(target, time, showDirection) {
   vehicleArrow.show(car.x, active.extent.top + VEHICLE_ARROW_GAP, car.z, yaw, time);
 }
 
+// The phone slides out once the car has been nearly still for STILL_SECONDS
+const STILL_SPEED = 0.05; // m/s
+const STILL_SECONDS = 0.5;
+let stillTime = 0;
 let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
@@ -424,8 +508,10 @@ function frame(now) {
   }
   updateTargetMarkers(mission.target(car), now / 1000, !mission.hidesDirection);
   updateCamera(dt);
+  updateSun();
   updateHud();
-  mobileApp.update(mission.phone(car));
+  stillTime = Math.abs(car.speed) < STILL_SPEED ? stillTime + dt : 0;
+  mobileApp.update(mission.phone(car), stillTime >= STILL_SECONDS);
   distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

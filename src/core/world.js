@@ -17,19 +17,26 @@ export const STREET_FURNITURE_COLLISION = true;
 export const sidewalkFixtures = [];
 
 const TOWN_OFFSETS = [-160, -80, 80, 160];
+// Ring road around the town. Every road ends on it, so the town is closed.
+export const RING = WORLD_LIMIT - 10;
 
 // alongX true runs along X at z = offset. alongX false runs along Z at x = offset.
-export const STREETS = [{ alongX: false, offset: 0, halfWidth: ROAD_HALF_WIDTH }];
+// `span` is the half length of the road, from its center to its end on the ring.
+export const STREETS = [{ alongX: false, offset: 0, halfWidth: ROAD_HALF_WIDTH, span: RING }];
 for (const o of TOWN_OFFSETS) {
-  STREETS.push({ alongX: true, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2 });
-  STREETS.push({ alongX: false, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2 });
+  STREETS.push({ alongX: true, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2, span: RING });
+  STREETS.push({ alongX: false, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2, span: RING });
+}
+for (const o of [-RING, RING]) {
+  STREETS.push({ alongX: true, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2, span: RING });
+  STREETS.push({ alongX: false, offset: o, halfWidth: SIDE_ROAD_WIDTH / 2, span: RING });
 }
 
 // Rectangle covered by one street
 export function streetRect(s) {
   return s.alongX
-    ? { minX: -HALF_WORLD, maxX: HALF_WORLD, minZ: s.offset - s.halfWidth, maxZ: s.offset + s.halfWidth }
-    : { minX: s.offset - s.halfWidth, maxX: s.offset + s.halfWidth, minZ: -HALF_WORLD, maxZ: HALF_WORLD };
+    ? { minX: -s.span, maxX: s.span, minZ: s.offset - s.halfWidth, maxZ: s.offset + s.halfWidth }
+    : { minX: s.offset - s.halfWidth, maxX: s.offset + s.halfWidth, minZ: -s.span, maxZ: s.span };
 }
 
 // Road plus sidewalk rectangles. Parking, buildings and trees stay out of these.

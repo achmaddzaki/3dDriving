@@ -1,4 +1,9 @@
 ﻿import { inRect } from '../core/world.js';
+
+// Lot rect the car can check in from: the lot itself, plus the vehicle's check-in reach
+function reachRect(rect, reach) {
+  return reach > 0 ? { minX: rect.minX - reach, maxX: rect.maxX + reach, minZ: rect.minZ - reach, maxZ: rect.maxZ + reach } : rect;
+}
 import { createInventory, pick, planDeliveries, randomInt, randomStock, shuffled } from './inventory.js';
 import { formatRp } from './orders.js';
 
@@ -48,7 +53,7 @@ function createVisitFlow(targets, permanent) {
     targets,
     visited,
     update(car) {
-      here = targets.find((s) => inRect(car.x, car.z, s.rect)) || null;
+      here = targets.find((s) => inRect(car.x, car.z, reachRect(s.rect, car.reach ?? 0))) || null;
       if (checkedIn && checkedIn !== here) checkedIn = null;
       if (completed && completed !== here) completed = null;
     },

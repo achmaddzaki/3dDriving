@@ -42,6 +42,7 @@ export function createMobileApp({ orders, onCheckIn, onCheckOut, onTask, onDepot
   const toastEl = document.getElementById('mobile-toast');
   let open = false;
   let inLot = false;
+  let wasStopped = false;
   let screen = 'main';
   let store = null;      // store the phone is currently at
   let task = null;       // task of the current visit from the mission, or null
@@ -148,7 +149,8 @@ export function createMobileApp({ orders, onCheckIn, onCheckOut, onTask, onDepot
     orderTitleEl.textContent = isInvoice ? 'Create invoice' : 'Create order';
     saveBtn.textContent = isInvoice ? 'Save invoice' : 'Save order';
     orderStoreEl.textContent = store.name;
-    totalEl.textContent = `Total ${task?.kind === 'invoice' ? 'invoice' : 'order'}: ${formatRp(orders.total(store))}`;
+    const pending = draft.reduce((sum, line) => sum + line.amount, 0);
+    totalEl.textContent = `Total ${task?.kind === 'invoice' ? 'invoice' : 'order'}: ${formatRp(orders.total(store) + pending)}`;
     linesEl.replaceChildren(...draft.map(lineElement));
     addBtn.disabled = busy;
     saveBtn.disabled = busy || draft.length === 0;
@@ -233,7 +235,14 @@ export function createMobileApp({ orders, onCheckIn, onCheckOut, onTask, onDepot
     renderOrder();
   }
 
-  handle.addEventListener('click', () => setOpen(!open));
+  // The handle toggles the phone. Tapping the closed phone's visible edge also opens it.
+  handle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setOpen(!open);
+  });
+  root.addEventListener('click', () => {
+    if (!open) setOpen(true);
+  });
   bindButton('mobile-checkin', onCheckIn);
   bindButton('detail-task', runTask);
   bindButton('detail-photo', () => flash('Picture taken'));
@@ -253,13 +262,14 @@ export function createMobileApp({ orders, onCheckIn, onCheckOut, onTask, onDepot
 
   return {
     // `view` comes from the mission's phone(). The phone opens inside any store lot and at the distributor.
-    update(view) {
+    update(view, stopped = false) {
       store = view.store;
       task = view.task;
       inventory = view.inventory;
       const inLotNow = view.store !== null || view.depot;
-      if (inLotNow !== inLot) setOpen(inLotNow);
+      if (inLotNow !== inLot || stopped !== wasStopped) setOpen(inLotNow || stopped);
       inLot = inLotNow;
+      wasStopped = stopped;
       if (view.state === 'checkedIn') {
         if (screen === 'main') showScreen('detail');
         return;

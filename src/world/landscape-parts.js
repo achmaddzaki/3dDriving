@@ -11,15 +11,14 @@ export function lam(color) {
 
 const WHITE_MAT = new THREE.MeshLambertMaterial({ color: 0xffffff });
 const FLOWER_GEO = new THREE.SphereGeometry(0.12, 6, 5);
-const TUFT_GEO = new THREE.ConeGeometry(0.07, 0.4, 4);
 const POST_GEO = new THREE.BoxGeometry(0.12, 0.9, 0.12);
 const FLOWER_COLORS = [0xec407a, 0xffffff, 0xffeb3b, 0xff7043, 0xab47bc, 0xef5350, 0x42a5f5].map((c) => new THREE.Color(c));
-const TUFT_COLORS = [0x558b2f, 0x689f38, 0x7cb342, 0x33691e].map((c) => new THREE.Color(c));
-const PATCH_COLORS = [0x8bc34a, 0x6aa84f, 0x9ccc65, 0x5fa052];
 const HEDGE_COLORS = [0x2e7d32, 0x388e3c, 0x1b5e20];
 const POT_COLORS = [0xbf6b3e, 0xcfd8dc, 0x6d4c41, 0x37474f];
 const FENCE_COLORS = [0xf5f5f5, 0x8d6e63, 0x2e5d34];
 const STONE = 0xbdbdbd;
+const POND_WATER = 0x4fc3f7;
+const LILY_PAD = 0x558b2f;
 const SOIL = 0x5d4037;
 const WOOD = 0x8d6e63;
 
@@ -40,15 +39,13 @@ export function createContext(scene, rng) {
     scene,
     rng,
     flowers: { m: [], c: [] },
-    tufts: { m: [], c: [] },
     posts: { m: [], c: [] },
   };
 }
 
-/// <summary>Adds the batched flowers, grass tufts, and fence posts of <paramref name="ctx"/> to its scene.</summary>
+/// <summary>Adds the batched flowers and fence posts of <paramref name="ctx"/> to its scene.</summary>
 export function flushContext(ctx) {
   addInstanced(ctx.scene, FLOWER_GEO, WHITE_MAT, ctx.flowers.m, ctx.flowers.c);
-  addInstanced(ctx.scene, TUFT_GEO, WHITE_MAT, ctx.tufts.m, ctx.tufts.c);
   addInstanced(ctx.scene, POST_GEO, WHITE_MAT, ctx.posts.m, ctx.posts.c);
 }
 
@@ -133,20 +130,16 @@ export function addRoundBed(ctx, f, lx, lz, r) {
   solidCircle(f, lx, lz, r);
 }
 
-/// <summary>Flat patch of lawn with grass tufts, radius <paramref name="r"/>.</summary>
-export function addGrassPatch(ctx, f, lx, lz, r) {
+/// <summary>Round pond of radius <paramref name="r"/> with a stone rim, lily pads, and collision.</summary>
+export function addPond(ctx, f, r) {
   const g = newGroup(ctx, f);
-  const patch = cylinder(r, r, 0.03, pick(ctx, PATCH_COLORS), lx, 0.03, lz);
-  patch.scale.z = 0.7 + ctx.rng() * 0.5;
-  patch.castShadow = false;
-  g.add(patch);
-  for (let i = 0; i < Math.round(r * r * 3); i++) {
-    const o = inEllipse(ctx, r * 0.9, r * 0.9 * patch.scale.z);
-    const p = f.pt(lx + o.x, lz + o.z);
-    const s = 0.7 + ctx.rng() * 0.8;
-    ctx.tufts.m.push(matrixAt(p.x, 0.2 * s, p.z, s, s, s, ctx.rng() * Math.PI));
-    ctx.tufts.c.push(pick(ctx, TUFT_COLORS));
+  g.add(cylinder(r + 0.25, r + 0.25, 0.14, STONE, 0, 0.07, 0));
+  g.add(cylinder(r, r, 0.1, POND_WATER, 0, 0.1, 0));
+  for (let i = 0; i < 3; i++) {
+    const o = inEllipse(ctx, r * 0.7, r * 0.7);
+    g.add(cylinder(0.22, 0.22, 0.02, LILY_PAD, o.x, 0.16, o.z));
   }
+  solidCircle(f, 0, 0, r + 0.25);
 }
 
 /// <summary>Hedge of length <paramref name="len"/> running along the local X axis.</summary>
@@ -170,7 +163,7 @@ export function addFenceRun(ctx, x0, z0, x1, z1) {
   const len = horizontal ? Math.abs(x1 - x0) : Math.abs(z1 - z0);
   const cx = (x0 + x1) / 2;
   const cz = (z0 + z1) / 2;
-  const color = FENCE_COLORS[Math.floor(Math.abs(cx * 7 + cz * 13)) % FENCE_COLORS.length];
+  const color = pick(ctx, FENCE_COLORS);
   const c = new THREE.Color(color);
   const posts = Math.max(2, Math.ceil(len / 1.4) + 1);
   for (let i = 0; i < posts; i++) {

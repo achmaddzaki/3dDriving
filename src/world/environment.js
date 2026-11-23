@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import {
   WORLD_SIZE,
   WORLD_LIMIT,
-  HALF_WORLD,
   SIDEWALK_WIDTH,
   STREETS,
   ROAD_EDGE_COLLISION,
@@ -189,8 +188,8 @@ function rectOf(s, t1, t2, c1, c2) {
 }
 function addStreetSurface(scene, s) {
   const geo = s.alongX
-    ? new THREE.PlaneGeometry(WORLD_SIZE, s.halfWidth * 2)
-    : new THREE.PlaneGeometry(s.halfWidth * 2, WORLD_SIZE);
+    ? new THREE.PlaneGeometry(2 * s.span, s.halfWidth * 2)
+    : new THREE.PlaneGeometry(s.halfWidth * 2, 2 * s.span);
   const strip = new THREE.Mesh(geo, roadMat);
   strip.rotation.x = -Math.PI / 2;
   strip.position.set(s.alongX ? 0 : s.offset, 0.01, s.alongX ? s.offset : 0);
@@ -200,7 +199,7 @@ function addStreetSurface(scene, s) {
 // Center dashes that stop short of crossings
 function addStreetDashes(scene, s) {
   const crossings = crossingStreets(s);
-  for (let t = -WORLD_LIMIT; t <= WORLD_LIMIT; t += 10) {
+  for (let t = -s.span; t <= s.span; t += 10) {
     if (crossings.some((o) => Math.abs(t - o.offset) < o.halfWidth + ZEBRA_LENGTH + DASH_HALF)) continue;
     const dashGeo = s.alongX
       ? new THREE.BoxGeometry(5, 0.02, 0.3)
@@ -221,16 +220,17 @@ function addSidewalks(scene, s) {
 }
 // Along-ranges where sidewalks run on street s
 function sidewalkRanges(s) {
-  return freeRanges(crossingBlocks(s, SIDEWALK_WIDTH));
+  return freeRanges(s, crossingBlocks(s, SIDEWALK_WIDTH));
 }
-function freeRanges(blocked) {
+// Along-ranges of street s that are not blocked, from one end of the road to the other
+function freeRanges(s, blocked) {
   const free = [];
-  let start = -HALF_WORLD;
+  let start = -s.span;
   for (const [a, b] of blocked) {
     if (a > start) free.push([start, a]);
     start = Math.max(start, b);
   }
-  if (start < HALF_WORLD) free.push([start, HALF_WORLD]);
+  if (start < s.span) free.push([start, s.span]);
   return free;
 }
 // Removes each cut range from every segment
@@ -318,7 +318,7 @@ function addLaneMarkings(scene) {
   const lines = [];
   const arrows = [];
   for (const s of STREETS) {
-    for (const [from, to] of freeRanges(crossingBlocks(s, CROSSING_CLEAR))) {
+    for (const [from, to] of freeRanges(s, crossingBlocks(s, CROSSING_CLEAR))) {
       lines.push(...edgeLineMatrices(s, from, to));
     }
     arrowMatrices(s, arrows);
@@ -474,7 +474,7 @@ function addStreetLamps(scene) {
 }
 // Parts of each sidewalk edge that are not in front of a parking lot
 function barrierRanges(s, sd, lots) {
-  const band = rectOf(s, -HALF_WORLD, HALF_WORLD, s.offset + sd * s.halfWidth, s.offset + sd * (s.halfWidth + SIDEWALK_WIDTH + 0.5));
+  const band = rectOf(s, -s.span, s.span, s.offset + sd * s.halfWidth, s.offset + sd * (s.halfWidth + SIDEWALK_WIDTH + 0.5));
   const cuts = lots
     .filter((lot) => rectsOverlap(lot, band))
     .map((lot) => (s.alongX ? [lot.minX, lot.maxX] : [lot.minZ, lot.maxZ]));
