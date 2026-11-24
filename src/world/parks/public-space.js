@@ -1,5 +1,6 @@
 import { box } from '../../core/primitives.js';
 import { SIDEWALK_WIDTH } from '../../core/world.js';
+import { groundHeight } from '../../core/terrain.js';
 import { TREE_MODELS, addTree } from '../nature/tree.js';
 import {
   lam,
@@ -51,13 +52,27 @@ function addPocketPark(scene, lot) {
   const w = lot.maxX - lot.minX;
   const d = lot.maxZ - lot.minZ;
   const ctx = createContext(scene, mulberry32(Math.floor(cx * 31 + cz * 17)));
-  scene.add(box(w, 0.04, PATH_WIDTH, lam(0xcfc7bd), cx, 0.02, cz));
-  scene.add(box(PATH_WIDTH, 0.04, d, lam(0xcfc7bd), cx, 0.02, cz));
+  addPathStrip(scene, true, cx, cz, w);
+  addPathStrip(scene, false, cx, cz, d);
   addPlaza(ctx, cx, cz, 2.4);
   addRoundBed(ctx, frame(cx, cz, 0), 0, 0, 1.3);
   addCornerFeatures(ctx, cx, cz, w, d);
   addBorder(ctx, cx, cz, w, d);
   flushContext(ctx);
+}
+
+// Paved path through the center of a pocket park, cut into 2 m pieces so it follows the ground
+function addPathStrip(scene, alongX, cx, cz, len) {
+  const pieces = Math.ceil(len / 2);
+  const step = len / pieces;
+  for (let i = 0; i < pieces; i++) {
+    const a = -len / 2 + (i + 0.5) * step;
+    const x = alongX ? cx + a : cx;
+    const z = alongX ? cz : cz + a;
+    const w = alongX ? step : PATH_WIDTH;
+    const d = alongX ? PATH_WIDTH : step;
+    scene.add(box(w, 0.04, d, lam(0xcfc7bd), x, groundHeight(x, z) + 0.02, z));
+  }
 }
 
 const randomTree = (ctx) => TREE_MODELS[Math.floor(ctx.rng() * TREE_MODELS.length)];

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { box, addInstanced, matrixAt } from '../../core/primitives.js';
 import { obstacles } from '../../core/world.js';
+import { groundHeight } from '../../core/terrain.js';
 
 // Materials are shared by color
 const materials = new Map();
@@ -60,7 +61,7 @@ const pick = (ctx, list) => list[Math.floor(ctx.rng() * list.length)];
 
 function newGroup(ctx, f) {
   const g = new THREE.Group();
-  g.position.set(f.x, 0, f.z);
+  g.position.set(f.x, groundHeight(f.x, f.z), f.z);
   g.rotation.y = f.rot;
   ctx.scene.add(g);
   return g;
@@ -99,7 +100,7 @@ function scatterFlowers(ctx, f, count, y, rx, rz, lx = 0, lz = 0) {
     const o = inEllipse(ctx, rx, rz);
     const p = f.pt(lx + o.x, lz + o.z);
     const s = 0.8 + ctx.rng() * 0.5;
-    ctx.flowers.m.push(matrixAt(p.x, y, p.z, s, s, s));
+    ctx.flowers.m.push(matrixAt(p.x, y + groundHeight(p.x, p.z), p.z, s, s, s));
     ctx.flowers.c.push(pick(ctx, FLOWER_COLORS));
   }
 }
@@ -170,11 +171,12 @@ export function addFenceRun(ctx, x0, z0, x1, z1) {
     const k = i / (posts - 1) - 0.5;
     const px = horizontal ? cx + k * len : cx;
     const pz = horizontal ? cz : cz + k * len;
-    ctx.posts.m.push(matrixAt(px, 0.45, pz, 1, 1, 1));
+    ctx.posts.m.push(matrixAt(px, 0.45 + groundHeight(px, pz), pz, 1, 1, 1));
     ctx.posts.c.push(c);
   }
+  const baseY = groundHeight(cx, cz);
   for (const y of [0.35, 0.72]) {
-    ctx.scene.add(box(horizontal ? len : 0.06, 0.08, horizontal ? 0.06 : len, lam(color), cx, y, cz));
+    ctx.scene.add(box(horizontal ? len : 0.06, 0.08, horizontal ? 0.06 : len, lam(color), cx, baseY + y, cz));
   }
   const hw = horizontal ? len / 2 : 0.1;
   const hd = horizontal ? 0.1 : len / 2;
@@ -242,5 +244,5 @@ export function addGardenPlot(ctx, f) {
 
 /// <summary>Flat stone disc of radius <paramref name="r"/> at (<paramref name="x"/>, <paramref name="z"/>).</summary>
 export function addPlaza(ctx, x, z, r) {
-  ctx.scene.add(cylinder(r, r, 0.05, 0xcfc7bd, x, 0.025, z));
+  ctx.scene.add(cylinder(r, r, 0.05, 0xcfc7bd, x, groundHeight(x, z) + 0.025, z));
 }

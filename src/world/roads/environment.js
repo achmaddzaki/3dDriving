@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import {
-  WORLD_SIZE,
   WORLD_LIMIT,
   SIDEWALK_WIDTH,
   STREETS,
@@ -64,13 +63,6 @@ const lensMats = {
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);
 // Ground, road strips, dashes, sidewalks, and all road markings
 export function buildEnvironment(scene) {
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(WORLD_SIZE, WORLD_SIZE),
-    new THREE.MeshLambertMaterial({ color: 0x4a8f3a })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.receiveShadow = true;
-  scene.add(ground);
   for (const s of STREETS) {
     addStreetSurface(scene, s);
     addStreetDashes(scene, s);

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { addInstanced, matrixAt } from '../../core/primitives.js';
 import { WORLD_LIMIT, ZONES, inRect, grow, range, rand } from '../../core/world.js';
+import { groundHeight } from '../../core/terrain.js';
 
 const GRASS_COUNT = 14000;
 const GRASS_CLEARANCE = 0.5; // gap kept from roads, sidewalks, lots, and landscaped areas
@@ -18,7 +19,7 @@ export function addGrass(scene, taken) {
     const z = range(-WORLD_LIMIT, WORLD_LIMIT);
     if (blockers.some((r) => inRect(x, z, grow(r, GRASS_CLEARANCE)))) continue;
     const s = 0.7 + rand() * 0.8;
-    matrices.push(matrixAt(x, 0.2 * s, z, s, s, s, rand() * Math.PI * 2));
+    matrices.push(matrixAt(x, groundHeight(x, z) + 0.2 * s, z, s, s, s, rand() * Math.PI * 2));
     colors.push(TUFT_COLORS[Math.floor(rand() * TUFT_COLORS.length)]);
   }
   addInstanced(scene, TUFT_GEO, TUFT_MAT, matrices, colors);

@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { box } from '../../core/primitives.js';
+import { groundHeight } from '../../core/terrain.js';
 import { createContext, flushContext, frame, mulberry32, addFlowerBed, addHedgeRun, addPlanter } from '../nature/landscape-parts.js';
 
 const ENTRY_HALF = 2; // half width of the gate gap in the middle of each side
@@ -13,14 +14,15 @@ export function addParkContents(scene, lot) {
   const cx = (lot.minX + lot.maxX) / 2;
   const cz = (lot.minZ + lot.maxZ) / 2;
   const basin = new THREE.Mesh(new THREE.CylinderGeometry(2, 2.2, 0.6, 16), STONE_MAT);
-  basin.position.set(cx, 0.3, cz);
+  const baseY = groundHeight(cx, cz);
+  basin.position.set(cx, baseY + 0.3, cz);
   basin.castShadow = true;
   scene.add(basin);
   const water = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 0.05, 16), WATER_MAT);
-  water.position.set(cx, 0.62, cz);
+  water.position.set(cx, baseY + 0.62, cz);
   scene.add(water);
   for (const dx of [-4, 4]) {
-    scene.add(box(1.6, 0.2, 0.5, WOOD_MAT, cx + dx, 0.5, cz));
+    scene.add(box(1.6, 0.2, 0.5, WOOD_MAT, cx + dx, groundHeight(cx + dx, cz) + 0.5, cz));
   }
   addParkGardens(scene, lot, cx, cz);
 }

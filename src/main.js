@@ -1,10 +1,12 @@
 import * as THREE from 'three';
 import { WORLD_LIMIT, ZONES, inRect, obstacles, sidewalkFixtures } from './core/world.js';
+import { buildGround, groundHeight } from './core/terrain.js';
 import { buildEnvironment, addRoadEdges } from './world/roads/environment.js';
 import { addStreetFurniture } from './world/roads/street-furniture.js';
 import { buildTown } from './world/buildings/town.js';
 import { addTrees } from './world/nature/tree.js';
-import { addBushes } from './world/nature/bush.js';
+import { addRocks } from './world/nature/rocks.js';
+import { addBushes, inBush } from './world/nature/bush.js';
 import { addGrass } from './world/nature/grass.js';
 import { addLandscaping } from './world/nature/landscaping.js';
 import { createDistanceCuller } from './core/distance-cull.js';
@@ -69,10 +71,12 @@ scene.add(sun, sun.target, new THREE.HemisphereLight(0xffffff, 0x445522, 0.6));
 // World: roads and sidewalks, then parking lots with buildings, then gardens, then trees
 buildEnvironment(scene);
 const { lots, spots, stores, distributorLot } = buildTown(scene, VEHICLES.length);
+buildGround(scene);
 addRoadEdges(scene, lots);
 addStreetFurniture(scene, lots, sidewalkFixtures);
 const gardens = addLandscaping(scene, lots);
 addTrees(scene, [...lots, ...gardens]);
+addRocks(scene, [...lots, ...gardens]);
 addBushes(scene, [...lots, ...gardens]);
 addGrass(scene, [...lots, ...gardens]);
 
@@ -125,6 +129,7 @@ function resetCar() {
 }
 
 const GRASS_SPEED_FACTOR = 0.5;   // top speed multiplier on grass
+const BUSH_SPEED_FACTOR = 0.5;    // top speed multiplier inside a bush
 const SPEED_LIMIT_DECEL = 15;     // m/s^2 used to slow down to a new top speed
 
 // Grass is any ground outside roads, sidewalks, and parking lots
@@ -132,9 +137,14 @@ function isOnGrass() {
   return ![...ZONES, ...lots].some((r) => inRect(car.x, car.z, r));
 }
 
-// Caps speed at the top speed, lower on grass. Slows down smoothly when the cap drops.
+// Top speed multiplier: bushes slow the car to half, and grass does too. Bushes do not stack with grass.
+function gripFactor() {
+  if (inBush(car.x, car.z)) return BUSH_SPEED_FACTOR;
+  return isOnGrass() ? GRASS_SPEED_FACTOR : 1;
+}
+// Caps speed at the top speed, lower on grass and in bushes. Slows down smoothly when the cap drops.
 function limitSpeed(dt) {
-  const grip = isOnGrass() ? GRASS_SPEED_FACTOR : 1;
+  const grip = gripFactor();
   const topForward = vehicle.maxSpeed * grip;
   const topReverse = vehicle.maxReverse * grip;
   if (car.speed > topForward) {
@@ -287,7 +297,7 @@ function boxPush(px, pz, r, b) {
 }
 
 function syncCarMesh(dt) {
-  active.mesh.position.set(car.x, 0, car.z);
+  active.mesh.position.set(car.x, groundHeight(car.x, car.z), car.z);
   active.mesh.rotation.y = car.heading;
 
   car.wheelAngle += (car.speed * dt) / vehicle.wheelRadius;
@@ -534,7 +544,8 @@ function updateTargetMarkers(target, time, showDirection) {
   const tx = (target.minX + target.maxX) / 2;
   const tz = (target.minZ + target.maxZ) / 2;
   const yaw = Math.atan2(tx - car.x, tz - car.z);
-  vehicleArrow.show(car.x, active.extent.top + VEHICLE_ARROW_GAP, car.z, yaw, time);
+  const top = groundHeight(car.x, car.z) + active.extent.top + VEHICLE_ARROW_GAP;
+  vehicleArrow.show(car.x, top, car.z, yaw, time);
 }
 
 // The phone slides out once the car has been nearly still for STILL_SECONDS

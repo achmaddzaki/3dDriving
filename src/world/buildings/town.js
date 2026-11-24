@@ -16,6 +16,7 @@ import { addParkContents } from '../parks/park.js';
 import { addPublicContents } from '../parks/public-space.js';
 import { buildDistributor } from './distributor.js';
 import { addParking, flushParking } from './lot-decor.js';
+import { setFlatRects, addLawnPatch } from '../../core/terrain.js';
 
 const LOT_CHANCE = 0.3;
 const SLOT_STEP = 5;
@@ -32,17 +33,21 @@ const DISTRIBUTOR = { t: -50, lotAlong: 100, lotDepth: 60 };
 export function buildTown(scene, spotCount) {
   const lots = [];
   const stores = [];
+  const placements = [];
   const distributor = addDistributor(scene, lots, spotCount);
   for (const s of STREETS) {
     for (const side of [-1, 1]) {
       let t = -s.span;
       while (t < s.span) {
         const spec = makeSpec(pickModel());
-        const placed = rand() <= LOT_CHANCE && tryAddLot(scene, lots, stores, s, side, t, spec);
+        const placed = rand() <= LOT_CHANCE && planLot(lots, stores, placements, s, side, t, spec);
         t += placed ? spec.lotAlong + LOT_GAP : SLOT_STEP;
       }
     }
   }
+  // Every lot must be flat before its contents are placed, so the public spaces stay level
+  setFlatRects([distributor.lot, ...placements.map((p) => p.lot)]);
+  for (const p of placements) buildLotContents(scene, p);
   flushParking(scene);
   return { lots, stores, spots: distributor.spots, distributorLot: distributor.lot };
 }
@@ -85,29 +90,38 @@ function lotRect(s, side, t, spec) {
     : { minX: perpMin, maxX: perpMax, minZ: t, maxZ: t + spec.lotAlong };
 }
 
-// Adds a lot and its contents when the spot is free. Lots may not touch roads, sidewalks, or other lots.
-function tryAddLot(scene, lots, stores, s, side, t, spec) {
+const isLawn = (spec) => spec.model.kind !== 'building';
+
+// Reserves a lot when the spot is free. Lots may not touch roads, sidewalks, or other lots.
+function planLot(lots, stores, placements, s, side, t, spec) {
   const lot = lotRect(s, side, t, spec);
   const insideWorld = lot.minX >= -WORLD_LIMIT && lot.maxX <= WORLD_LIMIT
     && lot.minZ >= -WORLD_LIMIT && lot.maxZ <= WORLD_LIMIT;
   if (!insideWorld) return false;
   if (ZONES.some((r) => rectsOverlap(r, lot)) || lots.some((l) => rectsOverlap(l, lot))) return false;
 
-  const kind = spec.model.kind;
-  const isLawn = kind !== 'building';
   const name = spec.model.sign ? randomShopName(spec.model.name) : null;
   lots.push(lot);
   if (name) stores.push({ name, rect: lot });
-  addLotSurface(scene, lot, isLawn ? lawnMat : lotMat);
-  if (kind === 'park') {
-    addParkContents(scene, lot);
-  } else if (isLawn) {
-    addPublicContents(scene, s, side, lot, kind);
-  } else {
+  placements.push({ s, side, t, spec, lot, name });
+  return true;
+}
+
+// Adds the lot surface and its contents. Lawn lots follow the rolling ground, building lots stay flat.
+function buildLotContents(scene, { s, side, t, spec, lot, name }) {
+  const kind = spec.model.kind;
+  if (!isLawn(spec)) {
+    addLotSurface(scene, lot, lotMat);
     const building = addBuildingInLot(scene, s, side, t, spec, name);
     addParking(s, side, t, spec.lotAlong, lot, building);
+    return;
   }
-  return true;
+  addLawnPatch(scene, lot, lawnMat);
+  if (kind === 'park') {
+    addParkContents(scene, lot);
+  } else {
+    addPublicContents(scene, s, side, lot, kind);
+  }
 }
 
 function addLotSurface(scene, lot, mat) {
