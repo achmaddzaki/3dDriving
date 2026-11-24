@@ -97,6 +97,53 @@
     .option-grid button.active { border-color: #ffb300; }
     .option-grid button:focus-visible { outline: none; border-color: #4fc3f7; }
     .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
+    #briefing {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: inherit;
+    }
+    .briefing-card {
+      background: #1d2430;
+      color: #fff;
+      border-radius: 12px;
+      padding: 24px 28px;
+      width: min(600px, 92vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      line-height: 1.55;
+    }
+    .briefing-card h2 { margin: 0 0 8px; font-size: 22px; }
+    .briefing-card h3 { margin: 18px 0 6px; font-size: 15px; color: #b0bac9; }
+    .briefing-card p { margin: 0 0 8px; font-size: 14px; }
+    .briefing-card ol, .briefing-card ul { margin: 0; padding-left: 20px; font-size: 14px; }
+    .briefing-card li { margin-bottom: 4px; }
+    .briefing-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+      font-size: 13px;
+      color: #b0bac9;
+    }
+    #briefing-start {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #1e88e5;
+      color: #fff;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    #briefing-start:hover { background: #1976d2; }
     #mobile {
       position: fixed;
       top: 50%;
@@ -307,6 +354,34 @@
     </div>
   </div>
 
+  <div id="briefing">
+    <div class="briefing-card">
+      <h2>Welcome to Zack's Vibe Coding Challenge</h2>
+      <p>
+        This project is a 3D driving simulation of field sales work using the Simplidots app.
+        You drive a vehicle through a town, visit customers and the distributor, and complete the
+        task assigned to your user type.
+      </p>
+      <h3>How to play</h3>
+      <ol>
+        <li>Choose a vehicle and a user type from the menu (Esc or the Menu button).</li>
+        <li>Follow the yellow marker and the arrow above your car to reach the next target.</li>
+        <li>Park at a store. When the car is nearly still, the Simplidots app slides out on the right.</li>
+        <li>Check in, then follow the steps shown in the app, such as creating orders, taking pictures, or checking out.</li>
+        <li>Drive with W/A/S/D or the arrow keys, use Space to brake hard, and press R to reset the car to the distributor.</li>
+      </ol>
+      <h3>About this project</h3>
+      <p>
+        No manual coding was applied during the entire build process. The whole project was created
+        through AI prompting, as a vibe coding experiment.
+      </p>
+      <p>Special thanks to the judges, Mr. Jowan and Mr. Ifan.</p>
+      <div class="briefing-footer">
+        <span>Press Enter to start.</span>
+        <button id="briefing-start" type="button">Start</button>
+      </div>
+    </div>
+  </div>
   <aside id="mobile">
     <button id="mobile-handle" aria-label="Show or hide the mobile app">📱</button>
     <div class="phone">

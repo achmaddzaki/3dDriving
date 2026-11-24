@@ -16,8 +16,13 @@ import { createOrderBook } from './game/orders.js';
 
 const keys = new Set();
 let menuOpen = false;
+let briefingOpen = true;
 
 window.addEventListener('keydown', (e) => {
+  if (briefingOpen) {
+    if (e.code === 'Enter' || e.code === 'Escape') closeBriefing();
+    return;
+  }
   if (e.code === 'Escape') {
     setMenu(!menuOpen);
     return;
@@ -443,6 +448,15 @@ function selectUserType(id) {
   typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === id));
 }
 
+// Welcome briefing shown on load; driving stays paused until it is dismissed
+const briefingEl = document.getElementById('briefing');
+function closeBriefing() {
+  briefingOpen = false;
+  keys.clear();
+  briefingEl.classList.add('hidden');
+}
+document.getElementById('briefing-start').addEventListener('click', closeBriefing);
+
 document.getElementById('menu-btn').addEventListener('click', () => setMenu(!menuOpen));
 document.getElementById('menu-close').addEventListener('click', () => setMenu(false));
 menuEl.addEventListener('click', (e) => {
@@ -500,7 +514,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
 
-  if (!menuOpen) {
+  if (!menuOpen && !briefingOpen) {
     updateCar(dt);
     syncCarMesh(dt);
     updateReturns(dt);
