@@ -157,7 +157,7 @@ function parkingWidth(s) {
 function laneWidth(s) {
   return s.halfWidth - parkingWidth(s);
 }
-function laneCenter(s) {
+export function laneCenter(s) {
   return laneWidth(s) / 2;
 }
 // World x and z for along-street position t and absolute across position

@@ -53,6 +53,7 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/game/marker.js` - yellow arrow above the next mission target
 - `src/game/mission.js` - user types and their missions: salesman (15 stores, then the distributor), canvasser (invoice from stock), driver (drop ordered products), collector (collect debts)
 - `src/game/inventory.js` - random stock a user carries, deliveries planning, and shared random helpers
+- `src/game/npc-traffic.js` - optional NPC cars (off by default, switched on in the menu). They drive on the right lane, turn left or right at junctions, stop for cars ahead or for the player, and speak in a bubble when the player bumps them or waits in front for 2 seconds
 - `src/game/mobile-app.js` - mobile app preview on the right edge: nearby customers, check-in and check-out, and the create order screen. Slides out in a store lot, hides again when the car leaves
 - `src/data/products.js` - dummy product catalog (name and price in Rp) and the unit names used on order lines
 - `src/data/customers.js` - dummy owner, address and phone for each store's customer detail page

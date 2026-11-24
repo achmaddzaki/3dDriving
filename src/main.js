@@ -15,6 +15,7 @@ import { USER_TYPES } from './game/mission.js';
 import { createDirectionArrow, createMarker } from './game/marker.js';
 import { createMobileApp } from './game/mobile-app.js';
 import { createOrderBook } from './game/orders.js';
+import { createNpcTraffic } from './game/npc-traffic.js';
 
 const keys = new Set();
 let menuOpen = false;
@@ -84,6 +85,10 @@ addGrass(scene, [...lots, ...gardens]);
 const RENDER_DISTANCE = 200; // meters from the camera; raise for a longer view, lower for speed
 const distanceCuller = createDistanceCuller(scene, RENDER_DISTANCE);
 
+// NPC cars drive on the right-hand lane. They stay hidden until switched on from the menu.
+const traffic = createNpcTraffic(scene);
+let trafficOn = false;
+
 // Every vehicle is parked at its own distributor spot. `active` is the one being driven.
 const RETURN_DELAY = 3; // seconds before a vehicle you stopped driving goes back to its spot
 const VEHICLE_ARROW_GAP = 1.5; // height of the direction arrow above the vehicle's top
@@ -126,6 +131,7 @@ Object.assign(car, active.pose);
 
 function resetCar() {
   Object.assign(car, { x: active.home.x, z: active.home.z, heading: active.home.heading, speed: 0, steer: 0 });
+  traffic.resetSpeech();
 }
 
 const GRASS_SPEED_FACTOR = 0.5;   // top speed multiplier on grass
@@ -222,7 +228,7 @@ const CONTACT_TURN_RATE = 2.5;
 const MAX_MOVE_STEP = 0.15;
 
 function resolveCollisions(dt) {
-  const solids = [...obstacles, ...vehicleObstacles()];
+  const solids = [...obstacles, ...vehicleObstacles(), ...traffic.solids()];
   const contactKeep = Math.pow(CONTACT_SPEED_RETAIN, dt);
   for (const c of vehicle.colliders) {
     for (const o of solids) {
@@ -361,6 +367,7 @@ function updateHud() {
 const menuEl = document.getElementById('menu');
 const menuButtons = document.querySelectorAll('[data-vehicle]');
 const typeButtons = document.querySelectorAll('[data-type]');
+const trafficButtons = document.querySelectorAll('[data-traffic]');
 
 // Mission for the chosen user type, created over the current store and distributor lots
 // Builds the mission for a user type with the current vehicle's cargo size
@@ -460,6 +467,7 @@ function handleMenuKey(e) {
 function selectVehicle(id) {
   const next = fleet.find((e) => e.def.id === id);
   if (!next || next === active) return;
+  traffic.resetSpeech();
 
   active.pose = { x: car.x, z: car.z, heading: car.heading };
   active.returnTimer = RETURN_DELAY;
@@ -518,6 +526,23 @@ typeButtons.forEach((btn) => {
   });
 });
 
+// Switches the NPC cars on or off and updates the menu label
+function setTraffic(on) {
+  trafficOn = on;
+  traffic.setEnabled(on, car);
+  trafficButtons.forEach((b) => {
+    b.classList.toggle('active', on);
+    b.querySelector('strong').textContent = `NPC cars: ${on ? 'On' : 'Off'}`;
+  });
+}
+
+trafficButtons.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    setTraffic(!trafficOn);
+    setMenu(false);
+  });
+});
+
 menuButtons.forEach((b) => b.classList.toggle('active', b.dataset.vehicle === vehicle.id));
 vehicleEl.textContent = `Vehicle: ${vehicle.name}`;
 typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === userType.id));
@@ -565,6 +590,7 @@ function frame(now) {
   }
   updateTargetMarkers(mission.target(car), now / 1000, !mission.hidesDirection);
   updateCamera(dt);
+  traffic.update(menuOpen || briefingOpen ? 0 : dt, car, vehicle, camera);
   updateSun();
   updateHud();
   stillTime = Math.abs(car.speed) < STILL_SPEED ? stillTime + dt : 0;

@@ -42,8 +42,33 @@
     }
     #menu-btn:hover { background: rgba(0, 0, 0, 0.65); }
     .hidden { display: none !important; }
+    .npc-bubble {
+      position: fixed;
+      transform: translate(-50%, -100%);
+      margin-top: -10px;
+      background: #fff;
+      color: #1d2430;
+      padding: 6px 10px;
+      border-radius: 12px;
+      font-size: 13px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 4;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+    .npc-bubble::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -6px;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-bottom: 0;
+      border-top-color: #fff;
+    }
     #menu {
       position: fixed;
+      z-index: 10;
       inset: 0;
       background: rgba(0, 0, 0, 0.6);
       display: flex;
@@ -351,6 +376,10 @@
         <button data-type="driver"><strong>Driver</strong><span>Drop the ordered products at each listed customer</span></button>
         <button data-type="collector"><strong>Collector</strong><span>Collect the debt from each listed customer</span></button>
       </div>
+      <h3 class="section-title">Traffic</h3>
+      <div class="option-grid">
+        <button data-traffic><strong>NPC cars: Off</strong><span>Cars drive on the right lane, stop in front of you, and speak when you get close</span></button>
+      </div>
       <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
     </div>
   </div>
@@ -377,6 +406,7 @@
         through AI prompting, as a vibe coding experiment.
       </p>
       <p>Special thanks to the judges, Mr. Jowan and Mr. Ifan.</p>
+      <p>Last Updated 2026-11-24 06:34 PM</p>
       <div class="briefing-footer">
         <span>Press Enter to start.</span>
         <button id="briefing-start" type="button">Start</button>
