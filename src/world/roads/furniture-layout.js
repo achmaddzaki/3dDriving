@@ -5,7 +5,7 @@ import {
   rectsOverlap,
   inRect,
   grow,
-} from '../core/world.js';
+} from '../../core/world.js';
 
 // Street furniture kinds in placement order. fl runs along the street, fw runs across it, v is the center offset from the curb.
 export const FURNITURE_TYPES = [

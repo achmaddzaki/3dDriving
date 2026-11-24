@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { box } from '../../core/primitives.js';
-import { createContext, flushContext, frame, mulberry32, addFlowerBed, addHedgeRun, addPlanter } from '../landscape-parts.js';
+import { createContext, flushContext, frame, mulberry32, addFlowerBed, addHedgeRun, addPlanter } from '../nature/landscape-parts.js';
 
 const ENTRY_HALF = 2; // half width of the gate gap in the middle of each side
 

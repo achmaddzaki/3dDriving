@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WORLD_LIMIT, ZONES, inRect, grow, range, rand, obstacles } from '../core/world.js';
+import { WORLD_LIMIT, ZONES, inRect, grow, range, rand, obstacles } from '../../core/world.js';
 
 const TREE_COUNT = 6000;
 const TRUNK_COLOR = 0x6b4423;

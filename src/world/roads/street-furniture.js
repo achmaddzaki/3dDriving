@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { addInstanced, matrixAt } from '../core/primitives.js';
-import { SIDEWALK_HEIGHT, STREET_FURNITURE_COLLISION, obstacles } from '../core/world.js';
+import { addInstanced, matrixAt } from '../../core/primitives.js';
+import { SIDEWALK_HEIGHT, STREET_FURNITURE_COLLISION, obstacles } from '../../core/world.js';
 import { FURNITURE_TYPES, layoutFurniture } from './furniture-layout.js';
 
 const UNIT_BOX = new THREE.BoxGeometry(1, 1, 1);

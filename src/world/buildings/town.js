@@ -1,4 +1,4 @@
-﻿import * as THREE from 'three';
+import * as THREE from 'three';
 import { box } from '../../core/primitives.js';
 import {
   WORLD_LIMIT,
@@ -12,8 +12,8 @@ import {
 } from '../../core/world.js';
 import { pickModel, randomShopName } from './models.js';
 import { addFacades, addGableRoof, addRoadSign, addRoofTrim, addShopLabel } from './facade.js';
-import { addParkContents } from './park.js';
-import { addPublicContents } from './public-space.js';
+import { addParkContents } from '../parks/park.js';
+import { addPublicContents } from '../parks/public-space.js';
 import { buildDistributor } from './distributor.js';
 import { addParking, flushParking } from './lot-decor.js';
 
@@ -25,7 +25,7 @@ const lotMat = new THREE.MeshLambertMaterial({ color: 0x5a5a5e });
 const lawnMat = new THREE.MeshLambertMaterial({ color: 0x66bb6a });
 
 // Fixed distributor lot on the west side of the main road, reserved before random lots
-const DISTRIBUTOR = { t: -30, lotAlong: 60, lotDepth: 45 };
+const DISTRIBUTOR = { t: -50, lotAlong: 100, lotDepth: 60 };
 
 // Parking lots with buildings or parks, tried along both sides of every street.
 // Returns all lots, the store lots, the distributor lot, and its parking spots.

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { box, sphere } from '../core/primitives.js';
-import { WORLD_LIMIT, ZONES, inRect, grow, range, rand } from '../core/world.js';
+import { box, sphere } from '../../core/primitives.js';
+import { WORLD_LIMIT, ZONES, inRect, grow, range, rand } from '../../core/world.js';
 
 const BUSH_COUNT = 250;
 

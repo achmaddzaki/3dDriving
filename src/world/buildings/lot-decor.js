@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { addInstanced, matrixAt } from '../../core/primitives.js';
 import { SIDEWALK_WIDTH, obstacles } from '../../core/world.js';
-import { mulberry32 } from '../landscape-parts.js';
+import { mulberry32 } from '../nature/landscape-parts.js';
 
 const SEED = 77123;      // own generator, so the town layout does not change
 const SLOT_LEN = 2.6;    // along-street length of one parking space

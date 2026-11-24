@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { box, addInstanced, matrixAt } from '../core/primitives.js';
-import { obstacles } from '../core/world.js';
+import { box, addInstanced, matrixAt } from '../../core/primitives.js';
+import { obstacles } from '../../core/world.js';
 
 // Materials are shared by color
 const materials = new Map();

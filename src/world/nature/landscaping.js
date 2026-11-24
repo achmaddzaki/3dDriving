@@ -1,4 +1,4 @@
-import { SIDEWALK_WIDTH, STREETS, WORLD_LIMIT, ZONES, rectsOverlap, grow } from '../core/world.js';
+import { SIDEWALK_WIDTH, STREETS, WORLD_LIMIT, ZONES, rectsOverlap, grow } from '../../core/world.js';
 
 import { createContext, flushContext, frame, mulberry32, addPond } from './landscape-parts.js';
 

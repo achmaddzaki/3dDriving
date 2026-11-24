@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { addInstanced, matrixAt } from '../core/primitives.js';
-import { WORLD_LIMIT, ZONES, inRect, grow, range, rand } from '../core/world.js';
+import { addInstanced, matrixAt } from '../../core/primitives.js';
+import { WORLD_LIMIT, ZONES, inRect, grow, range, rand } from '../../core/world.js';
 
 const GRASS_COUNT = 14000;
 const GRASS_CLEARANCE = 0.5; // gap kept from roads, sidewalks, lots, and landscaped areas

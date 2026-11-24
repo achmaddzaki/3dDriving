@@ -1,6 +1,6 @@
 import { box } from '../../core/primitives.js';
 import { SIDEWALK_WIDTH } from '../../core/world.js';
-import { TREE_MODELS, addTree } from '../tree.js';
+import { TREE_MODELS, addTree } from '../nature/tree.js';
 import {
   lam,
   createContext,
@@ -15,7 +15,7 @@ import {
   addSeatingArea,
   addGardenPlot,
   addPlaza,
-} from '../landscape-parts.js';
+} from '../nature/landscape-parts.js';
 
 const SEATING_DEPTH = 3.4;  // footprint of a seating area across the street, from its sidewalk side
 const SEATING_GAP = 0.3;    // space between the sidewalk edge and the seating area

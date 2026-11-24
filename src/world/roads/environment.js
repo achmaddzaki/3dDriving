@@ -11,8 +11,8 @@ import {
   sidewalkFixtures,
   obstacles,
   rectsOverlap,
-} from '../core/world.js';
-import { addInstanced, matrixAt } from '../core/primitives.js';
+} from '../../core/world.js';
+import { addInstanced, matrixAt } from '../../core/primitives.js';
 const ROAD_PATCH_HEIGHT = 0.02;
 const CURB_FACE_W = 0.2;
 const MARK_Y = 0.03;

@@ -64,7 +64,9 @@ Pick one from the menu. Each has its own model, speed, acceleration, steering, a
 - `src/world/building/models.js` - building and park models with category weights
 - `src/world/building/facade.js` - windows, doors, roof trim, and store signs
 - `src/world/building/park.js` - park contents (fountain, benches, corner flower beds, planters)
-- `src/world/building/distributor.js` - distributor lot: tower, warehouse, and vehicle parking spots
+- `src/world/building/distributor.js` - distributor factory yard (fenced, 100 x 60 m lot): gate, four-floor office, sawtooth production hall with loading docks, silos, chimneys, containers, floodlights, and vehicle parking spots
+- `src/world/building/factory-parts.js` - factory builders for the distributor: batched boxes and cylinders, sign labels, chain-link fence runs, sawtooth hall, silos, chimneys, containers, forklift, pallet stacks, drums, and floodlights
+- `src/world/building/logo.js` - red Simplidots logo extruded into 3D from `src/img/logo_simpli_red.svg`, on a concrete plinth with a spotlight in the distributor yard
 - `src/world/furniture-layout.js` - placement rules for street furniture (seeded, no `rand()`)
 - `src/world/street-furniture.js` - street furniture meshes: lamps, benches, trash bins, bus shelters, mailboxes, newspaper stands, vending machines, electrical boxes, fire hydrants, and advertising boards
 - `src/world/tree.js` - ten tree models (adds Cherry Blossom, Cypress, Willow, Topiary) and tree placement

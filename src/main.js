@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { WORLD_LIMIT, ZONES, inRect, obstacles, sidewalkFixtures } from './core/world.js';
-import { buildEnvironment, addRoadEdges } from './world/environment.js';
-import { addStreetFurniture } from './world/street-furniture.js';
-import { buildTown } from './world/building/town.js';
-import { addTrees } from './world/tree.js';
-import { addBushes } from './world/bush.js';
-import { addGrass } from './world/grass.js';
-import { addLandscaping } from './world/landscaping.js';
+import { buildEnvironment, addRoadEdges } from './world/roads/environment.js';
+import { addStreetFurniture } from './world/roads/street-furniture.js';
+import { buildTown } from './world/buildings/town.js';
+import { addTrees } from './world/nature/tree.js';
+import { addBushes } from './world/nature/bush.js';
+import { addGrass } from './world/nature/grass.js';
+import { addLandscaping } from './world/nature/landscaping.js';
 import { createDistanceCuller } from './core/distance-cull.js';
 import { CARGO, VEHICLES, buildVehicle } from './vehicles/vehicle.js';
 import { USER_TYPES } from './game/mission.js';
@@ -59,7 +59,7 @@ scene.fog = new THREE.Fog(0x87ceeb, 90, 280);
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 
 const sun = new THREE.DirectionalLight(0xffffff, 1.1);
-sun.position.set(60, 100, 40);
+sun.position.set(-60, 100, -40);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 Object.assign(sun.shadow.camera, { left: -80, right: 80, top: 80, bottom: -80, far: 300 });
@@ -169,10 +169,14 @@ function updateCar(dt) {
 
   // Bicycle model: turn rate depends on speed and steering angle
   car.heading += (car.speed * Math.tan(car.steer) / vehicle.wheelBase) * vehicle.turnRateScale * dt;
-  car.x += Math.sin(car.heading) * car.speed * dt;
-  car.z += Math.cos(car.heading) * car.speed * dt;
-
-  resolveCollisions();
+  // Small sub-steps keep a fast car from skipping over a thin barrier in one frame
+  const steps = Math.max(1, Math.ceil(Math.abs(car.speed * dt) / MAX_MOVE_STEP));
+  const subDt = dt / steps;
+  for (let i = 0; i < steps; i++) {
+    car.x += Math.sin(car.heading) * car.speed * subDt;
+    car.z += Math.cos(car.heading) * car.speed * subDt;
+    resolveCollisions(subDt);
+  }
   car.x = Math.min(Math.max(car.x, -WORLD_LIMIT), WORLD_LIMIT);
   car.z = Math.min(Math.max(car.z, -WORLD_LIMIT), WORLD_LIMIT);
 }
@@ -200,8 +204,16 @@ function vehicleObstacles() {
   return fleet.filter((e) => e !== active).map((e) => ({ box: footprint(e) }));
 }
 
-function resolveCollisions() {
+// Per-second share of speed kept while touching an obstacle; lower values stop the car faster
+const CONTACT_SPEED_RETAIN = 0.2;
+// Radians per second the heading turns away from a surface the car is driving into
+const CONTACT_TURN_RATE = 2.5;
+// Longest movement allowed in one sub-step, in metres
+const MAX_MOVE_STEP = 0.15;
+
+function resolveCollisions(dt) {
   const solids = [...obstacles, ...vehicleObstacles()];
+  const contactKeep = Math.pow(CONTACT_SPEED_RETAIN, dt);
   for (const c of vehicle.colliders) {
     for (const o of solids) {
       const fx = Math.sin(car.heading);
@@ -212,9 +224,29 @@ function resolveCollisions() {
       if (!push) continue;
       car.x += push.x;
       car.z += push.z;
-      car.speed *= 0.2;
+      car.speed *= contactKeep;
+      deflectHeading(push, dt);
     }
   }
+}
+
+// Turns the heading so the car slides along a surface instead of pushing into it
+function deflectHeading(push, dt) {
+  const len = Math.hypot(push.x, push.z);
+  if (len < 1e-6) return;
+  const nx = push.x / len;
+  const nz = push.z / len;
+  const fx = Math.sin(car.heading);
+  const fz = Math.cos(car.heading);
+  const moveDir = Math.sign(car.speed);
+  // Moving into the surface means the motion points against the push direction
+  if (moveDir === 0 || (fx * nx + fz * nz) * moveDir >= 0) return;
+  // Derivative of the forward vector with respect to heading
+  const tx = Math.cos(car.heading);
+  const tz = -Math.sin(car.heading);
+  const side = tx * nx + tz * nz;
+  const turn = Math.sign(side) * moveDir * CONTACT_TURN_RATE * dt;
+  car.heading += turn;
 }
 
 // Push vector that moves a circle at (px, pz) out of a circle obstacle, or null when they do not touch
@@ -304,7 +336,7 @@ let shownMissionText = '';
 // The shadow box is fixed at ±80 m, so it follows the car to shade the buildings around it
 function updateSun() {
   sun.target.position.set(car.x, 0, car.z);
-  sun.position.set(car.x + 60, 100, car.z + 40);
+  sun.position.set(car.x - 60, 100, car.z - 40);
 }
 
 function updateHud() {
