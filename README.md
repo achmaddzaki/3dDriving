@@ -1,4 +1,4 @@
-# Simple 3D Driving
+# Route Rush
 
 A small driving sandbox in the browser. You drive a red car around a straight road with cones, trees and buildings.
 

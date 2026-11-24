@@ -16,14 +16,27 @@ import { createDirectionArrow, createMarker } from './game/marker.js';
 import { createMobileApp } from './game/mobile-app.js';
 import { createOrderBook } from './game/orders.js';
 import { createNpcTraffic } from './game/npc-traffic.js';
+import { createIntroCamera } from './game/intro-camera.js';
 
 const keys = new Set();
 let menuOpen = false;
-let briefingOpen = true;
+// 'title' while the main menu is up, 'panning' while the camera moves to the car, then 'playing'
+let phase = 'title';
+let overlayEl = null; // the How to play or Credit card while it is open
 
 window.addEventListener('keydown', (e) => {
-  if (briefingOpen) {
-    if (e.code === 'Enter' || e.code === 'Escape') closeBriefing();
+  if (overlayEl) {
+    if (e.code === 'Enter' || e.code === 'Escape') {
+      e.preventDefault();
+      closeOverlay();
+    }
+    return;
+  }
+  if (phase !== 'playing') {
+    if (phase === 'title' && e.code === 'Enter') {
+      e.preventDefault();
+      startGame();
+    }
     return;
   }
   if (e.code === 'Escape') {
@@ -222,14 +235,20 @@ function vehicleObstacles() {
 
 // Per-second share of speed kept while touching an obstacle; lower values stop the car faster
 const CONTACT_SPEED_RETAIN = 0.2;
+// Share of speed kept on the first contact with an NPC car: 10% remains, so 90% is lost at once
+const NPC_HIT_SPEED_RETAIN = 0.1;
 // Radians per second the heading turns away from a surface the car is driving into
 const CONTACT_TURN_RATE = 2.5;
 // Longest movement allowed in one sub-step, in metres
 const MAX_MOVE_STEP = 0.15;
 
+// NPC cars seen in contact during the previous sub-step, so one impact only costs speed once
+let npcContacts = new Set();
+
 function resolveCollisions(dt) {
   const solids = [...obstacles, ...vehicleObstacles(), ...traffic.solids()];
   const contactKeep = Math.pow(CONTACT_SPEED_RETAIN, dt);
+  const touchingNpcs = new Set();
   for (const c of vehicle.colliders) {
     for (const o of solids) {
       const fx = Math.sin(car.heading);
@@ -240,10 +259,17 @@ function resolveCollisions(dt) {
       if (!push) continue;
       car.x += push.x;
       car.z += push.z;
+      if (o.npc) {
+        // Hitting an NPC car drops speed at once and does not turn the car
+        touchingNpcs.add(o.npc);
+        if (!npcContacts.has(o.npc)) car.speed *= NPC_HIT_SPEED_RETAIN;
+        continue;
+      }
       car.speed *= contactKeep;
       deflectHeading(push, dt);
     }
   }
+  npcContacts = touchingNpcs;
 }
 
 // Turns the heading so the car slides along a surface instead of pushing into it
@@ -328,18 +354,60 @@ function updateReturns(dt) {
 const cameraTarget = new THREE.Vector3();
 const lookTarget = new THREE.Vector3();
 
-function updateCamera(dt, snap = false) {
+// Sets the chase camera position and look point for the current car pose
+function chasePose() {
   const fx = Math.sin(car.heading);
   const fz = Math.cos(car.heading);
   const d = vehicle.cameraDistance;
   cameraTarget.set(car.x - fx * d, vehicle.cameraHeight, car.z - fz * d);
+  lookTarget.set(car.x + fx * 2, 1.2, car.z + fz * 2);
+}
+
+function updateCamera(dt, snap = false) {
+  chasePose();
   if (snap) {
     camera.position.copy(cameraTarget);
   } else {
     camera.position.lerp(cameraTarget, 1 - Math.exp(-6 * dt));
   }
-  lookTarget.set(car.x + fx * 2, 1.2, car.z + fz * 2);
   camera.lookAt(lookTarget);
+}
+
+// Title screen camera, and the pan from it to the chase camera when the game starts
+const PAN_SECONDS = 2.5;
+const introCenter = {
+  x: (distributorLot.minX + distributorLot.maxX) / 2,
+  z: (distributorLot.minZ + distributorLot.maxZ) / 2,
+};
+const intro = createIntroCamera(introCenter);
+const panFrom = new THREE.Vector3();
+const panLookFrom = new THREE.Vector3();
+const panLook = new THREE.Vector3();
+let panTime = 0;
+
+// Leaves the title screen and starts the pan to the car
+function startGame() {
+  if (phase !== 'title') return;
+  phase = 'panning';
+  panFrom.copy(camera.position);
+  panLookFrom.copy(intro.look);
+  panTime = 0;
+  document.getElementById('title-menu').classList.add('hidden');
+}
+
+// Eases the camera from the title view to the chase view, then hands control to the player
+function updatePan(dt) {
+  panTime += dt;
+  const k = Math.min(panTime / PAN_SECONDS, 1);
+  const eased = k * k * (3 - 2 * k);
+  chasePose();
+  camera.position.lerpVectors(panFrom, cameraTarget, eased);
+  panLook.lerpVectors(panLookFrom, lookTarget, eased);
+  camera.lookAt(panLook);
+  if (k < 1) return;
+  phase = 'playing';
+  document.body.classList.remove('intro');
+  updateCamera(0, true);
 }
 
 const speedEl = document.getElementById('speed');
@@ -498,14 +566,27 @@ function selectUserType(id) {
   typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === id));
 }
 
-// Welcome briefing shown on load; driving stays paused until it is dismissed
-const briefingEl = document.getElementById('briefing');
-function closeBriefing() {
-  briefingOpen = false;
+// Title menu buttons open the How to play or Credit card, or start the game
+const cardEls = { how: document.getElementById('briefing'), credit: document.getElementById('credits') };
+function openOverlay(el) {
+  overlayEl = el;
   keys.clear();
-  briefingEl.classList.add('hidden');
+  el.classList.remove('hidden');
 }
-document.getElementById('briefing-start').addEventListener('click', closeBriefing);
+function closeOverlay() {
+  if (!overlayEl) return;
+  overlayEl.classList.add('hidden');
+  overlayEl = null;
+}
+document.querySelectorAll('[data-title]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const action = btn.dataset.title;
+    if (action === 'start') return startGame();
+    openOverlay(action === 'how' ? cardEls.how : cardEls.credit);
+  });
+});
+document.getElementById('briefing-back').addEventListener('click', closeOverlay);
+document.getElementById('credits-back').addEventListener('click', closeOverlay);
 
 document.getElementById('menu-btn').addEventListener('click', () => setMenu(!menuOpen));
 document.getElementById('menu-close').addEventListener('click', () => setMenu(false));
@@ -582,19 +663,27 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.05);
   last = now;
 
-  if (!menuOpen && !briefingOpen) {
+  const driving = phase === 'playing' && !menuOpen;
+  if (driving) {
     updateCar(dt);
     syncCarMesh(dt);
     updateReturns(dt);
     mission.update(car, dt);
   }
-  updateTargetMarkers(mission.target(car), now / 1000, !mission.hidesDirection);
-  updateCamera(dt);
-  traffic.update(menuOpen || briefingOpen ? 0 : dt, car, vehicle, camera);
+  if (phase === 'playing') {
+    updateTargetMarkers(mission.target(car), now / 1000, !mission.hidesDirection);
+    updateCamera(dt);
+  } else {
+    marker.hide();
+    vehicleArrow.hide();
+    if (phase === 'title') intro.update(dt, camera);
+    else updatePan(dt);
+  }
+  traffic.update(driving ? dt : 0, car, vehicle, camera);
   updateSun();
   updateHud();
   stillTime = Math.abs(car.speed) < STILL_SPEED ? stillTime + dt : 0;
-  mobileApp.update(mission.phone(car), stillTime >= STILL_SECONDS);
+  if (phase === 'playing') mobileApp.update(mission.phone(car), stillTime >= STILL_SECONDS);
   distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);

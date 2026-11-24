@@ -525,7 +525,7 @@ export function createNpcTraffic(scene) {
 
   // Boxes the player car collides with
   function solids() {
-    return active.map((n) => ({ box: bodyBox(n) }));
+    return active.map((n) => ({ box: bodyBox(n), npc: n }));
   }
 
   // Starts every car's speech from the friendly lines again
