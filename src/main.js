@@ -60,13 +60,47 @@ const approach = (value, target, step) => {
   return Math.max(value - step, target);
 };
 
+// Shows a plain message in the page when the browser cannot give the game a WebGL context
+function showGraphicsMessage(text) {
+  const el = document.createElement('div');
+  el.textContent = text;
+  Object.assign(el.style, {
+    position: 'fixed', inset: '0', display: 'flex', alignItems: 'center', justifyContent: 'center',
+    padding: '24px', textAlign: 'center', background: '#1b1f24', color: '#fff', font: '18px sans-serif', zIndex: '1000',
+  });
+  document.body.appendChild(el);
+}
+
+// Creates the WebGL renderer, or shows a message and stops when the browser refuses the context
+function createRenderer() {
+  try {
+    return new THREE.WebGLRenderer({ antialias: true });
+  } catch (error) {
+    console.error('main createRenderer', error.message);
+    showGraphicsMessage('Graphics could not start. Close other tabs or apps that use the GPU, then reload the page.');
+    throw error;
+  }
+}
+
+// Lets the browser restore a lost WebGL context; three.js rebuilds its GPU resources on restore
+function watchContext(canvas) {
+  canvas.addEventListener('webglcontextlost', (event) => {
+    event.preventDefault();
+    console.warn('main watchContext WebGL context lost, waiting for restore');
+  });
+  canvas.addEventListener('webglcontextrestored', () => {
+    console.info('main watchContext WebGL context restored');
+  });
+}
+
 // Renderer, scene, camera
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+const renderer = createRenderer();
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
+watchContext(renderer.domElement);
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x87ceeb);
