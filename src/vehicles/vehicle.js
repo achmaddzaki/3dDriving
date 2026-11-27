@@ -65,7 +65,7 @@ const BIKE = {
   wheelBase: 1.9,
   wheelRadius: 0.35,
   wheelWidth: 0.2,
-  maxSpeed: 120 / 3.6, // 120 km/h
+  maxSpeed: 150 / 3.6, // 150 km/h
   maxReverse: 10,
   accel: 18,
   brake: 30,

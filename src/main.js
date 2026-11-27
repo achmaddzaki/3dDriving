@@ -17,6 +17,9 @@ import { createMobileApp } from './game/mobile-app.js';
 import { createOrderBook } from './game/orders.js';
 import { createNpcTraffic } from './game/npc-traffic.js';
 import { createIntroCamera } from './game/intro-camera.js';
+import { scheduleMusicLoad, setMusicEnabled, updateMusicDuck } from './game/music.js';
+import { scheduleEngineLoad, setEngineEnabled, startEngine, updateEngine } from './game/engine.js';
+import { setHornEnabled } from './game/npc-horn.js';
 
 const keys = new Set();
 let menuOpen = false;
@@ -229,6 +232,8 @@ function updateCar(dt) {
 
   const steerInput = (left ? 1 : 0) - (right ? 1 : 0);
   car.steer = approach(car.steer, steerInput * vehicle.maxSteer, vehicle.steerRate * dt);
+  const engineKind = vehicle.id.startsWith('bike-') ? 'bike' : 'car';
+  updateEngine(Math.abs(car.speed) / vehicle.maxSpeed, left !== right, engineKind);
 
   // Bicycle model: turn rate depends on speed and steering angle
   car.heading += (car.speed * Math.tan(car.steer) / vehicle.wheelBase) * vehicle.turnRateScale * dt;
@@ -422,6 +427,7 @@ let panTime = 0;
 // Leaves the title screen and starts the pan to the car
 function startGame() {
   if (phase !== 'title') return;
+  startEngine();
   phase = 'panning';
   panFrom.copy(camera.position);
   panLookFrom.copy(intro.look);
@@ -499,9 +505,29 @@ function setMenu(open) {
 }
 
 // Menu keyboard navigation: arrows or WASD move the focus, Enter picks the focused option
-const menuGrids = [...document.querySelectorAll('#menu .option-grid')].map((g) => [...g.querySelectorAll('button')]);
+const menuTabs = document.querySelectorAll('.menu-tab');
+let menuTab = 'gameplay';
+let menuGrids = [];
 let menuGrid = 0;
 let menuCell = 0;
+
+// Shows one tab's panel and makes its option grids the keyboard targets
+function showMenuTab(name) {
+  menuTab = name;
+  menuTabs.forEach((t) => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.menu-panel').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== name));
+  menuGrids = [...document.querySelectorAll(`.menu-panel[data-panel="${name}"] .option-grid`)]
+    .map((g) => [...g.querySelectorAll('button')]);
+  menuGrid = 0;
+  menuCell = 0;
+}
+
+// Tab key switches between Gameplay and Settings
+function cycleMenuTab() {
+  showMenuTab(menuTab === 'gameplay' ? 'settings' : 'gameplay');
+  focusMenuCell(0, 0);
+}
+showMenuTab('gameplay');
 
 function focusMenuCell(grid, cell) {
   menuGrid = grid;
@@ -561,6 +587,9 @@ function handleMenuKey(e) {
   } else if (e.code === 'Enter' || e.code === 'NumpadEnter') {
     e.preventDefault();
     menuGrids[menuGrid][menuCell].click();
+  } else if (e.code === 'Tab') {
+    e.preventDefault();
+    cycleMenuTab();
   }
 }
 
@@ -658,6 +687,44 @@ trafficButtons.forEach((btn) => {
   });
 });
 
+menuTabs.forEach((btn) => {
+  btn.addEventListener('click', () => {
+    showMenuTab(btn.dataset.tab);
+    focusMenuCell(0, 0);
+  });
+});
+
+const soundButtons = document.querySelectorAll('[data-sound-effects]');
+const musicButtons = document.querySelectorAll('[data-music]');
+let soundEffectsOn = false; // off by default
+let musicOn = false; // off by default
+
+// Updates a settings button's label and highlight
+function setToggleLabel(buttons, label, on) {
+  buttons.forEach((b) => {
+    b.classList.toggle('active', on);
+    b.querySelector('strong').textContent = `${label}: ${on ? 'On' : 'Off'}`;
+  });
+}
+
+// Turns the horn and engine sounds on or off
+function setSoundEffects(on) {
+  soundEffectsOn = on;
+  setHornEnabled(on);
+  setEngineEnabled(on);
+  setToggleLabel(soundButtons, 'Sound effects', on);
+}
+
+// Turns the background music on or off
+function setMusic(on) {
+  musicOn = on;
+  setMusicEnabled(on);
+  setToggleLabel(musicButtons, 'Background music', on);
+}
+
+soundButtons.forEach((btn) => btn.addEventListener('click', () => setSoundEffects(!soundEffectsOn)));
+musicButtons.forEach((btn) => btn.addEventListener('click', () => setMusic(!musicOn)));
+
 menuButtons.forEach((b) => b.classList.toggle('active', b.dataset.vehicle === vehicle.id));
 vehicleEl.textContent = `Vehicle: ${vehicle.name}`;
 typeButtons.forEach((b) => b.classList.toggle('active', b.dataset.type === userType.id));
@@ -717,12 +784,18 @@ function frame(now) {
   updateSun();
   updateHud();
   stillTime = Math.abs(car.speed) < STILL_SPEED ? stillTime + dt : 0;
-  if (phase === 'playing') mobileApp.update(mission.phone(car), stillTime >= STILL_SECONDS);
+  if (phase === 'playing') {
+    const phone = mission.phone(car);
+    mobileApp.update(phone, stillTime >= STILL_SECONDS);
+    updateMusicDuck(phone.state);
+  }
   distanceCuller.update(camera);
   renderer.render(scene, camera);
   requestAnimationFrame(frame);
 }
 
+scheduleMusicLoad();
+scheduleEngineLoad();
 syncCarMesh(0);
 updateCamera(0, true);
 requestAnimationFrame(frame);

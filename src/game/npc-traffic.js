@@ -3,6 +3,7 @@ import { STREETS, grow, rectsOverlap } from '../core/world.js';
 import { box } from '../core/primitives.js';
 import { groundHeight } from '../core/terrain.js';
 import { laneCenter } from '../world/roads/environment.js';
+import { hornVolume, playHorn, scheduleHornLoad, unlockHorn } from './npc-horn.js';
 
 // NPC cars that drive on the right-hand lane, turn left or right at junctions, and stop for anything ahead
 const NPC_COUNT = 20;
@@ -25,6 +26,8 @@ const BUBBLE_READ_SECONDS = 2; // extra seconds each bubble stays up so the play
 const HIT_STOP_SECONDS = 3; // seconds a car stays stopped after the player hits it
 const TALK_COOLDOWN = 5; // seconds between two speeches of the same NPC
 const BLOCKED_TALK_SECONDS = 4; // seconds a car stays blocked by another car before it starts speaking, repeating while blocked
+const HORN_INTERVAL_SECONDS = 5; // seconds blocked before each honk, repeating while blocked
+const HORN_LONG_COUNT = 5; // honks with the long horn, then every later honk uses the short horn
 const BUBBLE_HEIGHT = 2.6; // m above the ground
 const EPS = 1e-6;
 const OFFSET_DECAY = 5; // 1/s, how fast a car slides from its old lane position to the new one after a turn
@@ -242,6 +245,8 @@ function createNpc() {
     touching: false,
     hitTimer: 0, // seconds left in the stop after a hit
     blockedTimer: 0, // seconds blocked by another car
+    hornTimer: 0, // seconds blocked since the last honk
+    hornCount: 0, // honks in the current block
     speechCount: 0, // lines spoken since the last reset, which sets the tone
     talkCooldown: 0,
     bubbleTimer: 0,
@@ -404,8 +409,24 @@ function reactToBlock(n, dt, blockedByCar) {
   }
 }
 
+// Honks every HORN_INTERVAL_SECONDS while the car is blocked by the player or another car, with volume set by distance to the player
+function honkWhileBlocked(n, dt, blockedByCar, car) {
+  if (!blockedByCar) {
+    n.hornTimer = 0;
+    n.hornCount = 0;
+    return;
+  }
+  n.hornTimer += dt;
+  if (n.hornTimer < HORN_INTERVAL_SECONDS) return;
+  n.hornTimer = 0;
+  n.hornCount += 1;
+  const pos = worldPos(n);
+  const volume = hornVolume(Math.hypot(pos.x - car.x, pos.z - car.z));
+  playHorn(n.hornCount > HORN_LONG_COUNT ? 'short' : 'long', volume);
+}
+
 // One simulation step for a car: stop or go, move, turn at junctions, and react to the player
-function updateNpc(n, dt, circles, others) {
+function updateNpc(n, dt, circles, others, car) {
   n.talkCooldown = Math.max(0, n.talkCooldown - dt);
   n.hitTimer = Math.max(0, n.hitTimer - dt);
   if (n.bubbleTimer > 0) {
@@ -418,6 +439,7 @@ function updateNpc(n, dt, circles, others) {
   const blockedByCar = others.some((m) => m !== n && rectsOverlap(zone, bodyBox(m)));
   reactToPlayer(n, dt, inFront, touching, blockedByCar);
   reactToBlock(n, dt, blockedByCar);
+  honkWhileBlocked(n, dt, inFront || blockedByCar, car);
   const blocked = inFront || touching || blockedByCar || n.hitTimer > 0;
   n.speed = approach(n.speed, blocked ? 0 : n.cruise, (blocked ? BRAKE : ACCEL) * dt);
   advance(n, n.speed * dt);
@@ -473,6 +495,7 @@ function isClearSpot(spot, car, chosen) {
 export function createNpcTraffic(scene) {
   let pool = [];
   let active = [];
+  scheduleHornLoad();
 
   // Turns traffic on at new random spots, or off and removes every NPC car
   function setEnabled(on, car) {
@@ -484,6 +507,7 @@ export function createNpcTraffic(scene) {
       active = [];
       return;
     }
+    unlockHorn();
     if (pool.length === 0) pool = Array.from({ length: NPC_COUNT }, createNpc);
     active = spawn(car);
     for (const n of active) scene.add(n.mesh); // posed by the next update, before the frame renders
@@ -501,6 +525,8 @@ export function createNpcTraffic(scene) {
         touching: false,
         hitTimer: 0,
         blockedTimer: 0,
+        hornTimer: 0,
+        hornCount: 0,
         speechCount: 0,
         talkCooldown: 0,
         bubbleTimer: 0,
@@ -518,7 +544,7 @@ export function createNpcTraffic(scene) {
   function update(dt, car, vehicle, camera) {
     if (active.length === 0) return;
     const circles = playerCircles(car, vehicle.colliders);
-    for (const n of active) updateNpc(n, dt, circles, active);
+    for (const n of active) updateNpc(n, dt, circles, active, car);
     camera.updateMatrixWorld();
     for (const n of active) placeNpc(n, camera);
   }

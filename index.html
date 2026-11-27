@@ -123,6 +123,19 @@
     .option-grid button.active { border-color: #ffb300; }
     .option-grid button:focus-visible { outline: none; border-color: #4fc3f7; }
     .hint { margin: 16px 0 0; font-size: 13px; color: #b0bac9; }
+    .menu-tabs { display: flex; gap: 8px; margin-top: 16px; }
+    .menu-tab {
+      flex: 1;
+      padding: 10px;
+      background: #2a3443;
+      color: #fff;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+    }
+    .menu-tab.active { border-color: #ffb300; }
+    .menu-tab:focus-visible { outline: none; border-color: #4fc3f7; }
     #briefing, #credits {
       position: fixed;
       inset: 0;
@@ -385,6 +398,11 @@
         <h2>Menu</h2>
         <button id="menu-close" aria-label="Close menu">✕</button>
       </div>
+      <div class="menu-tabs" role="tablist">
+        <button class="menu-tab active" data-tab="gameplay" role="tab">Gameplay</button>
+        <button class="menu-tab" data-tab="settings" role="tab">Settings</button>
+      </div>
+      <section class="menu-panel" data-panel="gameplay">
       <h3 class="section-title">Vehicle</h3>
       <div class="option-grid">
         <button data-vehicle="bike-small"><strong>Motorbike + Small Cargo</strong><span>Light bike with one small box behind</span></button>
@@ -401,10 +419,18 @@
         <button data-type="driver"><strong>Driver</strong><span>Drop the ordered products at each listed customer</span></button>
         <button data-type="collector"><strong>Collector</strong><span>Collect the debt from each listed customer</span></button>
       </div>
+      </section>
+      <section class="menu-panel hidden" data-panel="settings">
       <h3 class="section-title">Traffic</h3>
       <div class="option-grid">
         <button data-traffic><strong>NPC cars: Off</strong><span>Cars drive on the right lane, stop in front of you, and speak when you get close</span></button>
       </div>
+      <h3 class="section-title">Sound</h3>
+      <div class="option-grid">
+        <button data-sound-effects><strong>Sound effects: Off</strong><span>Engine and car horn sounds</span></button>
+        <button data-music><strong>Background music: Off</strong><span>Plays after 30 seconds, then repeats with a 20 second gap</span></button>
+      </div>
+      </section>
       <p class="hint">Driving pauses while the menu is open. Press Esc to open or close it.</p>
     </div>
   </div>
@@ -422,17 +448,19 @@
       <h3>Idea</h3>
       <p>Zack</p>
       <h3>Game code</h3>
-      <ul><li>Kiro</li><li>ChatGPT</li></ul>
-      <h3>Vehicles and models</h3>
       <ul><li>Kiro</li></ul>
+      <h3>Vehicles and models</h3>
+      <ul><li>Kiro</li><li>ChatGPT</li></ul>
       <h3>Town, roads and street furniture</h3>
       <ul><li>Kiro</li><li>ChatGPT</li></ul>
       <h3>Mission design and dialogue</h3>
-      <ul><li>ChatGPT</li><li>Kiro</li></ul>
+      <ul><li>ChatGPT</li><li>Zack</li></ul>
       <h3>NPC traffic</h3>
       <ul><li>Kiro</li></ul>
-      <h3>Testing</h3>
-      <ul><li>ChatGPT</li></ul>
+      <h3>Sound Effect</h3>
+      <ul><li>elevenlabs</li></ul>
+      <h3>Background Music</h3>
+      <ul><li>flowmusic</li></ul>
       <div class="briefing-footer">
         <span>Press Esc to go back.</span>
         <button id="credits-back" type="button">Back</button>
@@ -462,7 +490,7 @@
         through AI prompting, as a vibe coding experiment.
       </p>
       <p>Special thanks to the judges, Mr. Jowan and Mr. Ifan.</p>
-      <p>Last Updated 2026-11-24 08:40 PM</p>
+      <p>Last Updated 2026-11-27 08:00 PM</p>
       <div class="briefing-footer">
         <span>Press Esc to go back.</span>
         <button id="briefing-back" type="button">Back</button>
